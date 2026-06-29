@@ -5,7 +5,7 @@ import { Embers } from "./Embers";
 
 const db = supabase as any;
 
-export function CreateWizard({ userId, onDone }: { userId: string; onDone: () => void }) {
+export function CreateWizard({ userId, onDone, onCancel }: { userId: string; onDone: (newId?: string) => void; onCancel?: () => void }) {
   const [step, setStep] = useState(1);
   const [name, setName] = useState("");
   const [subtitle, setSubtitle] = useState("");
@@ -30,6 +30,14 @@ export function CreateWizard({ userId, onDone }: { userId: string; onDone: () =>
   async function save() {
     setSaving(true); setErr("");
     try {
+      // Enforce max 3 characters
+      const { count } = await db.from("characters").select("id", { count: "exact", head: true }).eq("user_id", userId);
+      if ((count ?? 0) >= 3) {
+        setErr("You already have 3 characters. Delete one to create a new character.");
+        setSaving(false);
+        return;
+      }
+
       let image_url = "";
       const { data: ch, error: e1 } = await db.from("characters").insert({
         user_id: userId, name, subtitle, class_level: classLevel,
@@ -54,7 +62,7 @@ export function CreateWizard({ userId, onDone }: { userId: string; onDone: () =>
       await db.from("traits").insert({ character_id: ch.id });
       await db.from("free_notes").insert({ character_id: ch.id });
 
-      onDone();
+      onDone(ch.id);
     } catch (e: any) { setErr(e.message ?? "Failed to forge character"); }
     finally { setSaving(false); }
   }
@@ -65,6 +73,10 @@ export function CreateWizard({ userId, onDone }: { userId: string; onDone: () =>
       <div className="j-page p-10 w-full max-w-2xl relative">
         <div className="j-spine" />
         <div className="pl-6">
+          <div className="flex items-center mb-2">
+            {onCancel && <button className="j-btn j-btn-ghost" onClick={onCancel}>← Back</button>}
+            <div className="flex-1" />
+          </div>
           <h1 className="j-h text-3xl text-center">Forge Your Codex</h1>
           <p className="text-center text-[var(--color-muted)] italic mb-4">Step {step} of 4</p>
           <div className="j-divider-ornate">✦</div>
@@ -130,7 +142,7 @@ export function CreateWizard({ userId, onDone }: { userId: string; onDone: () =>
             {step < 4 ? (
               <button className="j-btn" disabled={step === 1 && !name} onClick={() => setStep(step + 1)}>Next →</button>
             ) : (
-              <button className="j-btn" disabled={saving || !name} onClick={save}>{saving ? "Forging..." : "Bind in Fire"}</button>
+              <button className="j-btn" disabled={saving || !name} onClick={save}>{saving ? "Forging…" : "Create Character"}</button>
             )}
           </div>
         </div>
