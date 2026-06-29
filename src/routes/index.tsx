@@ -5,6 +5,7 @@ import type { Character } from "@/lib/types";
 import { AuthScreen } from "@/components/Auth";
 import { CreateWizard } from "@/components/CreateWizard";
 import { Journal } from "@/components/Journal";
+import { CharacterSelect } from "@/components/CharacterSelect";
 import { ToastProvider } from "@/components/Toast";
 
 export const Route = createFileRoute("/")({
@@ -18,31 +19,54 @@ export const Route = createFileRoute("/")({
 });
 
 const db = supabase as any;
+const LS_KEY = "ember-codex.active-character";
 
 function Index() {
-  const [loading, setLoading] = useState(true);
+  const [ready, setReady] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
-  const [character, setCharacter] = useState<Character | null>(null);
+  const [characters, setCharacters] = useState<Character[]>([]);
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const [creating, setCreating] = useState(false);
 
-  async function reload() {
-    setLoading(true);
+  async function reload(preferActive?: string | null) {
     const { data: u } = await supabase.auth.getUser();
-    if (!u.user) { setUserId(null); setCharacter(null); setLoading(false); return; }
+    if (!u.user) {
+      setUserId(null); setCharacters([]); setActiveId(null);
+      setReady(true);
+      return;
+    }
     setUserId(u.user.id);
-    const { data: chars } = await db.from("characters").select("*").eq("user_id", u.user.id).order("created_at", { ascending: true }).limit(1);
-    setCharacter(chars?.[0] ?? null);
-    setLoading(false);
+    const { data: chars } = await db.from("characters").select("*").eq("user_id", u.user.id).order("created_at", { ascending: true });
+    const list: Character[] = chars ?? [];
+    setCharacters(list);
+    const stored = typeof window !== "undefined" ? window.localStorage.getItem(LS_KEY) : null;
+    const preferred = preferActive ?? stored;
+    const found = list.find((c) => c.id === preferred);
+    setActiveId(found ? found.id : (list.length === 1 ? list[0].id : null));
+    setCreating(false);
+    setReady(true);
   }
 
   useEffect(() => {
     reload();
     const { data: sub } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "SIGNED_IN" || event === "SIGNED_OUT") reload();
+      if (event === "SIGNED_IN" || event === "SIGNED_OUT") {
+        if (event === "SIGNED_OUT" && typeof window !== "undefined") window.localStorage.removeItem(LS_KEY);
+        reload();
+      }
     });
     return () => sub.subscription.unsubscribe();
   }, []);
 
-  if (loading) {
+  function selectActive(id: string | null) {
+    setActiveId(id);
+    if (typeof window !== "undefined") {
+      if (id) window.localStorage.setItem(LS_KEY, id);
+      else window.localStorage.removeItem(LS_KEY);
+    }
+  }
+
+  if (!ready) {
     return (
       <div className="min-h-screen flex items-center justify-center text-[var(--color-muted)] italic">
         Kindling the codex…
@@ -50,14 +74,39 @@ function Index() {
     );
   }
 
+  const active = characters.find((c) => c.id === activeId) ?? null;
+
   return (
     <ToastProvider>
       {!userId ? (
         <AuthScreen />
-      ) : !character ? (
-        <CreateWizard userId={userId} onDone={reload} />
+      ) : creating || characters.length === 0 ? (
+        <CreateWizard
+          userId={userId}
+          onDone={async (newId?: string) => {
+            await reload(newId ?? null);
+            if (newId) selectActive(newId);
+          }}
+          onCancel={characters.length > 0 ? () => setCreating(false) : undefined}
+        />
+      ) : !active ? (
+        <CharacterSelect
+          characters={characters}
+          onPlay={(id) => selectActive(id)}
+          onCreate={() => setCreating(true)}
+          onDeleted={() => reload(null)}
+          onSignOut={async () => { await supabase.auth.signOut(); }}
+        />
       ) : (
-        <Journal initial={character} onSignOut={async () => { await supabase.auth.signOut(); }} />
+        <Journal
+          key={active.id}
+          initial={active}
+          characters={characters}
+          onSwitch={(id) => selectActive(id)}
+          onBackToSelect={() => selectActive(null)}
+          onCreateNew={() => setCreating(true)}
+          onSignOut={async () => { await supabase.auth.signOut(); }}
+        />
       )}
     </ToastProvider>
   );
