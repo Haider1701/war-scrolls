@@ -40,8 +40,16 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Ember Codex — D&D Character Journal" },
+      { title: "Dnd Journals" },
       { name: "description", content: "A handcrafted dark-fantasy journal for your D&D character — track stats, spells, sessions, NPCs and gear." },
+      { property: "og:title", content: "Dnd Journals" },
+      { name: "twitter:title", content: "Dnd Journals" },
+      { property: "og:description", content: "A handcrafted dark-fantasy journal for your D&D character — track stats, spells, sessions, NPCs and gear." },
+      { name: "twitter:description", content: "A handcrafted dark-fantasy journal for your D&D character — track stats, spells, sessions, NPCs and gear." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/dee4d4a6-cb41-4236-9da6-d5ae4484165f/id-preview-78168b69--a3d6a824-05eb-47e1-b6fc-b8c53439ea0a.lovable.app-1782747667146.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/dee4d4a6-cb41-4236-9da6-d5ae4484165f/id-preview-78168b69--a3d6a824-05eb-47e1-b6fc-b8c53439ea0a.lovable.app-1782747667146.png" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { property: "og:type", content: "website" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
