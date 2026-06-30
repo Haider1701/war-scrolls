@@ -121,7 +121,7 @@ export function NpcsGearTab({ characterId, readOnly }: { characterId: string; re
         <div className="flex gap-3 flex-wrap">
           {(["cp","sp","ep","gp","pp"] as const).map((k) => (
             <div key={k} className="flex flex-col items-center gap-1">
-              <div className={`coin ${k === "gp" ? "gp" : ""}`}>
+              <div className={`coin ${k}`} title={({cp:"Copper",sp:"Silver",ep:"Electrum",gp:"Gold",pp:"Platinum"})[k]}>
                 <div className="uppercase">{k}</div>
               </div>
               {readOnly ? <div className="j-glow-text">{coin?.[k] ?? 0}</div> :
