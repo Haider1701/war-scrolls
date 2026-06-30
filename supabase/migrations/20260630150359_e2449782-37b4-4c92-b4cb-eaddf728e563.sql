@@ -1,0 +1,1 @@
+ALTER TABLE public.characters ADD COLUMN IF NOT EXISTS class_level_2 text;

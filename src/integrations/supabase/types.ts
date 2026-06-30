@@ -99,6 +99,7 @@ export type Database = {
           background: string | null
           backstory: string | null
           class_level: string | null
+          class_level_2: string | null
           created_at: string
           features: Json | null
           hp_current: number | null
@@ -124,6 +125,7 @@ export type Database = {
           background?: string | null
           backstory?: string | null
           class_level?: string | null
+          class_level_2?: string | null
           created_at?: string
           features?: Json | null
           hp_current?: number | null
@@ -149,6 +151,7 @@ export type Database = {
           background?: string | null
           backstory?: string | null
           class_level?: string | null
+          class_level_2?: string | null
           created_at?: string
           features?: Json | null
           hp_current?: number | null
