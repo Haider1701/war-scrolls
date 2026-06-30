@@ -5,6 +5,7 @@ import type { Character } from "@/lib/types";
 import { AuthScreen } from "@/components/Auth";
 import { CreateWizard } from "@/components/CreateWizard";
 import { Journal } from "@/components/Journal";
+import { NpcPage } from "@/components/NpcPage";
 import { CharacterSelect } from "@/components/CharacterSelect";
 import { ToastProvider } from "@/components/Toast";
 
@@ -42,7 +43,7 @@ function Index() {
     const stored = typeof window !== "undefined" ? window.localStorage.getItem(LS_KEY) : null;
     const preferred = preferActive ?? stored;
     const found = list.find((c) => c.id === preferred);
-    setActiveId(found ? found.id : (list.length === 1 ? list[0].id : null));
+    setActiveId(found ? found.id : null);
     setCreating(false);
     setReady(true);
   }
@@ -53,7 +54,6 @@ function Index() {
       if (event === "SIGNED_OUT") {
         if (typeof window !== "undefined") {
           window.localStorage.removeItem(LS_KEY);
-          // Sweep any lingering Supabase auth keys to prevent stale token reuse
           Object.keys(window.localStorage)
             .filter((k) => k.startsWith("sb-") && k.endsWith("-auth-token"))
             .forEach((k) => window.localStorage.removeItem(k));
@@ -76,7 +76,6 @@ function Index() {
     try { await supabase.auth.signOut(); } catch { /* ignore */ }
   }
 
-
   function selectActive(id: string | null) {
     setActiveId(id);
     if (typeof window !== "undefined") {
@@ -87,8 +86,8 @@ function Index() {
 
   if (!ready) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-[var(--color-muted)] italic">
-        Kindling the codex…
+      <div className="min-h-screen flex items-center justify-center text-[var(--color-muted)] italic gap-3">
+        <span className="j-spinner" /> Kindling the codex…
       </div>
     );
   }
@@ -114,6 +113,16 @@ function Index() {
           onPlay={(id) => selectActive(id)}
           onCreate={() => setCreating(true)}
           onDeleted={() => reload(null)}
+          onSignOut={signOut}
+        />
+      ) : active.character_type === "npc" ? (
+        <NpcPage
+          key={active.id}
+          initial={active}
+          characters={characters}
+          onSwitch={(id) => selectActive(id)}
+          onBackToSelect={() => selectActive(null)}
+          onCreateNew={() => setCreating(true)}
           onSignOut={signOut}
         />
       ) : (
