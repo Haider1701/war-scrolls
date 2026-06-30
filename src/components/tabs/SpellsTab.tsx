@@ -21,17 +21,42 @@ export function SpellsTab({ characterId, readOnly }: { characterId: string; read
   const [meta, setMeta] = useState<SpellMeta | null>(null);
   const [spells, setSpells] = useState<Spell[]>([]);
   const [adding, setAdding] = useState<number | null>(null);
+  const [abilities, setAbilities] = useState<any>(null);
+  const [profBonus, setProfBonus] = useState<number>(2);
 
   useEffect(() => {
     (async () => {
-      const [m, s] = await Promise.all([
+      const [m, s, a, c] = await Promise.all([
         db.from("spell_meta").select("*").eq("character_id", characterId).maybeSingle(),
         db.from("spells").select("*").eq("character_id", characterId).order("spell_level"),
+        db.from("ability_scores").select("*").eq("character_id", characterId).maybeSingle(),
+        db.from("characters").select("class_level,class_level_2,proficiency_bonus").eq("id", characterId).maybeSingle(),
       ]);
       setMeta(m.data);
       setSpells(s.data ?? []);
+      setAbilities(a.data ?? null);
+      const lvl = totalLevel(c.data ?? { class_level: "", class_level_2: "" });
+      setProfBonus(lvl > 0 ? profBonusForLevel(lvl) : (c.data?.proficiency_bonus ?? 2));
     })();
   }, [characterId]);
+
+  // Derived spell DC / Atk bonus
+  const abilityKey = abilityKeyFor(meta?.spellcasting_ability ?? "");
+  const abilityScore = abilityKey && abilities ? abilities[abilityKey] ?? 10 : 10;
+  const abilityModNum = abilityMod(abilityScore);
+  const derivedDC = 8 + profBonus + abilityModNum;
+  const derivedAtk = profBonus + abilityModNum;
+
+  // Persist derived DC / Atk so saved record stays consistent
+  useEffect(() => {
+    if (!meta || !abilityKey) return;
+    if (meta.spell_save_dc !== derivedDC || meta.spell_attack_bonus !== derivedAtk) {
+      const patch = { spell_save_dc: derivedDC, spell_attack_bonus: derivedAtk };
+      setMeta({ ...meta, ...patch });
+      db.from("spell_meta").update(patch).eq("character_id", characterId);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [derivedDC, derivedAtk, abilityKey]);
 
   async function updateMeta(patch: Partial<SpellMeta>) {
     if (!meta) return;
