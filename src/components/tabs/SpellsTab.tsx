@@ -99,11 +99,17 @@ export function SpellsTab({ characterId, readOnly }: { characterId: string; read
     <div className="j-fade space-y-6">
       <div className="j-card grid grid-cols-2 md:grid-cols-4 gap-4">
         <MetaField label="Ability" value={meta.spellcasting_ability} readOnly={readOnly}
-          onChange={(v) => updateMeta({ spellcasting_ability: v })} />
-        <MetaNum label="Save DC" value={meta.spell_save_dc} readOnly={readOnly}
-          onChange={(v) => updateMeta({ spell_save_dc: v })} />
-        <MetaNum label="Atk Bonus" value={meta.spell_attack_bonus} readOnly={readOnly}
-          onChange={(v) => updateMeta({ spell_attack_bonus: v })} />
+          onChange={(v) => updateMeta({ spellcasting_ability: v })} hint="STR / DEX / CON / INT / WIS / CHA" />
+        <div>
+          <div className="text-[10px] uppercase tracking-widest text-[var(--color-muted)] mb-1">Save DC</div>
+          <div className="j-h text-2xl">{abilityKey ? derivedDC : "—"}</div>
+          <div className="text-[10px] italic text-[var(--color-muted)]">8 + prof + mod</div>
+        </div>
+        <div>
+          <div className="text-[10px] uppercase tracking-widest text-[var(--color-muted)] mb-1">Atk Bonus</div>
+          <div className="j-h text-2xl">{abilityKey ? (derivedAtk >= 0 ? `+${derivedAtk}` : derivedAtk) : "—"}</div>
+          <div className="text-[10px] italic text-[var(--color-muted)]">prof + mod</div>
+        </div>
         <div>
           <div className="text-[10px] uppercase tracking-widest text-[var(--color-muted)] mb-1">Slot Setup</div>
           <div className="text-xs text-[var(--color-muted)]">Edit max in tracker below</div>
