@@ -114,7 +114,7 @@ function Index() {
           onPlay={(id) => selectActive(id)}
           onCreate={() => setCreating(true)}
           onDeleted={() => reload(null)}
-          onSignOut={async () => { await supabase.auth.signOut(); }}
+          onSignOut={signOut}
         />
       ) : (
         <Journal
@@ -124,7 +124,7 @@ function Index() {
           onSwitch={(id) => selectActive(id)}
           onBackToSelect={() => selectActive(null)}
           onCreateNew={() => setCreating(true)}
-          onSignOut={async () => { await supabase.auth.signOut(); }}
+          onSignOut={signOut}
         />
       )}
     </ToastProvider>
