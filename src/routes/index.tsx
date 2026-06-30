@@ -49,14 +49,33 @@ function Index() {
 
   useEffect(() => {
     reload();
-    const { data: sub } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "SIGNED_IN" || event === "SIGNED_OUT") {
-        if (event === "SIGNED_OUT" && typeof window !== "undefined") window.localStorage.removeItem(LS_KEY);
+    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_OUT") {
+        if (typeof window !== "undefined") {
+          window.localStorage.removeItem(LS_KEY);
+          // Sweep any lingering Supabase auth keys to prevent stale token reuse
+          Object.keys(window.localStorage)
+            .filter((k) => k.startsWith("sb-") && k.endsWith("-auth-token"))
+            .forEach((k) => window.localStorage.removeItem(k));
+        }
+        setUserId(null);
+        setCharacters([]);
+        setActiveId(null);
+        setCreating(false);
+        setReady(true);
+        return;
+      }
+      if (event === "SIGNED_IN" && session?.user) {
         reload();
       }
     });
     return () => sub.subscription.unsubscribe();
   }, []);
+
+  async function signOut() {
+    try { await supabase.auth.signOut(); } catch { /* ignore */ }
+  }
+
 
   function selectActive(id: string | null) {
     setActiveId(id);
