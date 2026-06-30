@@ -1,8 +1,19 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Spell, SpellMeta } from "@/lib/types";
+import { abilityMod, profBonusForLevel, totalLevel } from "@/lib/types";
 
 const db = supabase as any;
+
+const ABILITY_KEYS: Record<string, string> = {
+  INT: "intelligence", WIS: "wisdom", CHA: "charisma",
+  STR: "strength", DEX: "dexterity", CON: "constitution",
+};
+function abilityKeyFor(label: string): string | null {
+  if (!label) return null;
+  const up = label.trim().slice(0, 3).toUpperCase();
+  return ABILITY_KEYS[up] ?? null;
+}
 
 const SCHOOLS = ["Abjuration","Conjuration","Divination","Enchantment","Evocation","Illusion","Necromancy","Transmutation"];
 
