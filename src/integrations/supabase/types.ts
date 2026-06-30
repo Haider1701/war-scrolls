@@ -90,6 +90,41 @@ export type Database = {
           },
         ]
       }
+      character_images: {
+        Row: {
+          character_id: string
+          created_at: string
+          id: string
+          image_url: string
+          is_primary: boolean
+          sort_order: number
+        }
+        Insert: {
+          character_id: string
+          created_at?: string
+          id?: string
+          image_url: string
+          is_primary?: boolean
+          sort_order?: number
+        }
+        Update: {
+          character_id?: string
+          created_at?: string
+          id?: string
+          image_url?: string
+          is_primary?: boolean
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "character_images_character_id_fkey"
+            columns: ["character_id"]
+            isOneToOne: false
+            referencedRelation: "characters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       characters: {
         Row: {
           affliction_note: string | null
@@ -98,6 +133,7 @@ export type Database = {
           armor_prof: string | null
           background: string | null
           backstory: string | null
+          character_type: string
           class_level: string | null
           class_level_2: string | null
           created_at: string
@@ -108,6 +144,8 @@ export type Database = {
           image_url: string | null
           languages: string | null
           name: string
+          npc_actions: string | null
+          npc_quotes: string | null
           passive_perception: number | null
           proficiency_bonus: number | null
           race: string | null
@@ -124,6 +162,7 @@ export type Database = {
           armor_prof?: string | null
           background?: string | null
           backstory?: string | null
+          character_type?: string
           class_level?: string | null
           class_level_2?: string | null
           created_at?: string
@@ -134,6 +173,8 @@ export type Database = {
           image_url?: string | null
           languages?: string | null
           name?: string
+          npc_actions?: string | null
+          npc_quotes?: string | null
           passive_perception?: number | null
           proficiency_bonus?: number | null
           race?: string | null
@@ -150,6 +191,7 @@ export type Database = {
           armor_prof?: string | null
           background?: string | null
           backstory?: string | null
+          character_type?: string
           class_level?: string | null
           class_level_2?: string | null
           created_at?: string
@@ -160,6 +202,8 @@ export type Database = {
           image_url?: string | null
           languages?: string | null
           name?: string
+          npc_actions?: string | null
+          npc_quotes?: string | null
           passive_perception?: number | null
           proficiency_bonus?: number | null
           race?: string | null

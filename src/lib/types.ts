@@ -1,6 +1,9 @@
+export type CharacterType = "player" | "npc";
+
 export type Character = {
   id: string;
   user_id: string;
+  character_type: CharacterType;
   name: string;
   subtitle: string;
   class_level: string;
@@ -22,7 +25,22 @@ export type Character = {
   tools_prof: string;
   backstory: string;
   features: { title: string; description: string }[];
+  npc_quotes: string;
+  npc_actions: string;
 };
+
+export type CharacterImage = {
+  id: string;
+  character_id: string;
+  image_url: string;
+  is_primary: boolean;
+  sort_order: number;
+  created_at?: string;
+};
+
+export const MAX_PLAYERS = 3;
+export const MAX_NPCS = 10;
+export const MAX_IMAGES = 6;
 
 // Extract trailing integer from strings like "War Cleric 3" -> 3
 export const parseLevel = (s?: string | null): number => {
@@ -32,7 +50,6 @@ export const parseLevel = (s?: string | null): number => {
 };
 export const totalLevel = (c: Pick<Character, "class_level" | "class_level_2">) =>
   parseLevel(c.class_level) + parseLevel(c.class_level_2);
-// 5e proficiency bonus from total character level
 export const profBonusForLevel = (lvl: number) => 2 + Math.floor((Math.max(1, lvl) - 1) / 4);
 export const formatMulticlass = (a?: string | null, b?: string | null) =>
   [a, b].filter((s) => s && String(s).trim().length > 0).join(" / ");
