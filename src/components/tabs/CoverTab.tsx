@@ -1,19 +1,16 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Character } from "@/lib/types";
 import { abilityMod, formatMulticlass, parseLevel, profBonusForLevel, totalLevel } from "@/lib/types";
-import { useToast } from "../Toast";
+import { CharacterGallery } from "../CharacterGallery";
 
 const db = supabase as any;
 
 export function CoverTab({ character, onChange, readOnly }: {
   character: Character; onChange: (c: Character) => void; readOnly: boolean;
 }) {
-  const fileRef = useRef<HTMLInputElement>(null);
-  const [dragging, setDragging] = useState(false);
   const [wisdom, setWisdom] = useState<number>(10);
   const [perceptionProf, setPerceptionProf] = useState(false);
-  const toast = useToast();
 
   // Pull live wisdom + perception proficiency so we can compute passive perception
   useEffect(() => {
@@ -27,7 +24,6 @@ export function CoverTab({ character, onChange, readOnly }: {
       setWisdom(a.data?.wisdom ?? 10);
       setPerceptionProf(!!s.data?.proficient);
     })();
-    // Refetch when character changes
     return () => { cancelled = true; };
   }, [character.id]);
 
@@ -36,7 +32,6 @@ export function CoverTab({ character, onChange, readOnly }: {
   const derivedProf = profBonusForLevel(Math.max(1, lvl || 1));
   const derivedPP = 10 + abilityMod(wisdom) + (perceptionProf ? derivedProf : 0);
 
-  // Persist derived values to DB so other reads stay consistent
   useEffect(() => {
     if (character.proficiency_bonus !== derivedProf || character.passive_perception !== derivedPP) {
       const patch = { proficiency_bonus: derivedProf, passive_perception: derivedPP };
@@ -46,17 +41,6 @@ export function CoverTab({ character, onChange, readOnly }: {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [derivedProf, derivedPP]);
 
-  async function upload(file: File) {
-    const path = `${character.user_id}/${character.id}/${Date.now()}_${file.name}`;
-    const { error } = await supabase.storage.from("character-portraits").upload(path, file, { upsert: true });
-    if (error) { toast("Upload failed"); return; }
-    const { data: signed } = await supabase.storage.from("character-portraits").createSignedUrl(path, 60 * 60 * 24 * 365);
-    const url = signed?.signedUrl ?? "";
-    await db.from("characters").update({ image_url: url }).eq("id", character.id);
-    onChange({ ...character, image_url: url });
-    toast("Portrait bound");
-  }
-
   function setField<K extends keyof Character>(k: K, v: Character[K]) {
     onChange({ ...character, [k]: v });
   }
@@ -65,27 +49,23 @@ export function CoverTab({ character, onChange, readOnly }: {
 
   return (
     <div className="j-fade">
-      <div
-        className={`j-card j-vignette relative overflow-hidden mb-6 ${!readOnly ? "cursor-pointer" : ""}`}
-        onDragOver={(e) => { if (!readOnly) { e.preventDefault(); setDragging(true); } }}
-        onDragLeave={() => setDragging(false)}
-        onDrop={(e) => {
-          if (readOnly) return;
-          e.preventDefault(); setDragging(false);
-          const f = e.dataTransfer.files?.[0]; if (f) upload(f);
-        }}
-        onClick={() => !readOnly && fileRef.current?.click()}
-        style={{ minHeight: 260 }}
-      >
+      <div className="j-card j-vignette relative overflow-hidden mb-4" style={{ minHeight: 260 }}>
         {character.image_url ? (
           <img src={character.image_url} alt={character.name} className="absolute inset-0 w-full h-full object-cover" />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center text-[var(--color-muted)] italic">
-            {readOnly ? "No portrait yet" : (dragging ? "Release to bind portrait" : "Click or drop an image to bind the portrait")}
+            {readOnly ? "No portrait yet" : "Upload images below — the ★ cover appears here."}
           </div>
         )}
-        <input ref={fileRef} type="file" accept="image/*" className="hidden"
-          onChange={(e) => { const f = e.target.files?.[0]; if (f) upload(f); }} />
+      </div>
+
+      <div className="mb-6">
+        <CharacterGallery
+          characterId={character.id}
+          userId={character.user_id}
+          readOnly={readOnly}
+          onPrimaryChange={(url) => setField("image_url", url)}
+        />
       </div>
 
       <div className="text-center mb-6">
