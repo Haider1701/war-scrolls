@@ -240,7 +240,9 @@ input:focus, textarea:focus { outline: none; }
   background-size: 100% 32px;
   background-position: 0 8px;
   background-repeat: repeat;
+  background-attachment: local;
 }
+
 
 
 .j-vignette::after {
