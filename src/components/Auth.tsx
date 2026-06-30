@@ -53,6 +53,10 @@ export function AuthScreen() {
       const msg = e?.message ?? "Something went wrong";
       if (e?.status === 429 || /rate/i.test(msg)) {
         setErr("Too many attempts, please wait a moment.");
+      } else if (/invalid login credentials/i.test(msg)) {
+        setErr("Email or password is incorrect.");
+      } else if (/already registered|already.*exist/i.test(msg)) {
+        setErr("An account with that email already exists. Try signing in.");
       } else {
         setErr(msg);
       }
