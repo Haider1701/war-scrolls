@@ -225,15 +225,23 @@ input:focus, textarea:focus { outline: none; }
 }
 
 .j-lined {
-  background-image: repeating-linear-gradient(
+  font-family: var(--font-fell);
+  font-size: 1rem;
+  line-height: 32px;
+  padding: 8px 20px;
+  background-image: linear-gradient(
     to bottom,
     transparent 0,
-    transparent 31px,
-    rgba(255,106,0,0.12) 31px,
-    rgba(255,106,0,0.12) 32px
+    transparent 30px,
+    rgba(255,106,0,0.22) 30px,
+    rgba(255,106,0,0.22) 31px,
+    transparent 31px
   );
-  line-height: 32px;
+  background-size: 100% 32px;
+  background-position: 0 8px;
+  background-repeat: repeat;
 }
+
 
 .j-vignette::after {
   content: "";
