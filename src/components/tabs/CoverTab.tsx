@@ -1,25 +1,50 @@
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Character } from "@/lib/types";
+import { abilityMod, formatMulticlass, parseLevel, profBonusForLevel, totalLevel } from "@/lib/types";
 import { useToast } from "../Toast";
 
 const db = supabase as any;
-
-const DETAILS: { key: keyof Character; label: string }[] = [
-  { key: "class_level", label: "Class & Level" },
-  { key: "race", label: "Race" },
-  { key: "alignment", label: "Alignment" },
-  { key: "background", label: "Background" },
-  { key: "proficiency_bonus", label: "Proficiency" },
-  { key: "passive_perception", label: "Passive Perception" },
-];
 
 export function CoverTab({ character, onChange, readOnly }: {
   character: Character; onChange: (c: Character) => void; readOnly: boolean;
 }) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
+  const [wisdom, setWisdom] = useState<number>(10);
+  const [perceptionProf, setPerceptionProf] = useState(false);
   const toast = useToast();
+
+  // Pull live wisdom + perception proficiency so we can compute passive perception
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const [a, s] = await Promise.all([
+        db.from("ability_scores").select("wisdom").eq("character_id", character.id).maybeSingle(),
+        db.from("skills").select("proficient").eq("character_id", character.id).eq("kind", "skill").eq("name", "Perception").maybeSingle(),
+      ]);
+      if (cancelled) return;
+      setWisdom(a.data?.wisdom ?? 10);
+      setPerceptionProf(!!s.data?.proficient);
+    })();
+    // Refetch when character changes
+    return () => { cancelled = true; };
+  }, [character.id]);
+
+  // Derived stats
+  const lvl = totalLevel(character);
+  const derivedProf = profBonusForLevel(Math.max(1, lvl || 1));
+  const derivedPP = 10 + abilityMod(wisdom) + (perceptionProf ? derivedProf : 0);
+
+  // Persist derived values to DB so other reads stay consistent
+  useEffect(() => {
+    if (character.proficiency_bonus !== derivedProf || character.passive_perception !== derivedPP) {
+      const patch = { proficiency_bonus: derivedProf, passive_perception: derivedPP };
+      onChange({ ...character, ...patch });
+      db.from("characters").update(patch).eq("id", character.id);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [derivedProf, derivedPP]);
 
   async function upload(file: File) {
     const path = `${character.user_id}/${character.id}/${Date.now()}_${file.name}`;
@@ -35,6 +60,8 @@ export function CoverTab({ character, onChange, readOnly }: {
   function setField<K extends keyof Character>(k: K, v: Character[K]) {
     onChange({ ...character, [k]: v });
   }
+
+  const classDisplay = formatMulticlass(character.class_level, character.class_level_2 ?? "");
 
   return (
     <div className="j-fade">
@@ -86,28 +113,64 @@ export function CoverTab({ character, onChange, readOnly }: {
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">
-        {DETAILS.map((d) => (
-          <div key={d.key} className="j-card">
-            <div className="text-[10px] uppercase tracking-widest text-[var(--color-muted)] mb-1">{d.label}</div>
-            {readOnly ? (
-              <div className="j-glow-text" style={{ fontFamily: "var(--font-uncial)", fontSize: "1.05rem" }}>
-                {String(character[d.key] ?? "") || <span className="text-[var(--color-muted)] italic">unset</span>}
-              </div>
-            ) : (
+        {/* Class & Level (with multiclass) */}
+        <div className="j-card md:col-span-3">
+          <div className="text-[10px] uppercase tracking-widest text-[var(--color-muted)] mb-1">Class & Level</div>
+          {readOnly ? (
+            <div className="j-glow-text" style={{ fontFamily: "var(--font-uncial)", fontSize: "1.1rem" }}>
+              {classDisplay || <span className="text-[var(--color-muted)] italic">unset</span>}
+              {lvl > 0 && <span className="text-xs text-[var(--color-muted)] ml-2">· total level {lvl}</span>}
+            </div>
+          ) : (
+            <div className="space-y-2">
               <input
                 className="j-input"
-                value={String(character[d.key] ?? "")}
-                onChange={(e) => {
-                  const raw = e.target.value;
-                  const next = (d.key === "proficiency_bonus" || d.key === "passive_perception")
-                    ? (parseInt(raw) || 0) as any
-                    : raw;
-                  setField(d.key, next as any);
-                }}
+                placeholder="War Cleric 3"
+                value={character.class_level}
+                onChange={(e) => setField("class_level", e.target.value)}
               />
+              <input
+                className="j-input"
+                placeholder="Second class (optional) — e.g. Fighter 2"
+                value={character.class_level_2 ?? ""}
+                onChange={(e) => setField("class_level_2", e.target.value as any)}
+              />
+              <div className="text-[10px] text-[var(--color-muted)] italic">
+                Total level: <span className="text-[var(--color-flame)]">{lvl || 0}</span>
+                {" · "}Computed proficiency: <span className="text-[var(--color-flame)]">+{derivedProf}</span>
+                {(parseLevel(character.class_level) > 0 || parseLevel(character.class_level_2) > 0) ? "" : "  (add a trailing level number to each class to compute)"}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Race / Alignment / Background */}
+        {(["race","alignment","background"] as const).map((k) => (
+          <div key={k} className="j-card">
+            <div className="text-[10px] uppercase tracking-widest text-[var(--color-muted)] mb-1">{k}</div>
+            {readOnly ? (
+              <div className="j-glow-text" style={{ fontFamily: "var(--font-uncial)", fontSize: "1.05rem" }}>
+                {character[k] || <span className="text-[var(--color-muted)] italic">unset</span>}
+              </div>
+            ) : (
+              <input className="j-input" value={character[k]} onChange={(e) => setField(k, e.target.value)} />
             )}
           </div>
         ))}
+
+        {/* Proficiency — derived, read-only */}
+        <div className="j-card">
+          <div className="text-[10px] uppercase tracking-widest text-[var(--color-muted)] mb-1">Proficiency</div>
+          <div className="j-glow-text" style={{ fontFamily: "var(--font-uncial)", fontSize: "1.1rem" }}>+{derivedProf}</div>
+          <div className="text-[10px] italic text-[var(--color-muted)]">auto · from total level</div>
+        </div>
+
+        {/* Passive Perception — derived, read-only */}
+        <div className="j-card">
+          <div className="text-[10px] uppercase tracking-widest text-[var(--color-muted)] mb-1">Passive Perception</div>
+          <div className="j-glow-text" style={{ fontFamily: "var(--font-uncial)", fontSize: "1.1rem" }}>{derivedPP}</div>
+          <div className="text-[10px] italic text-[var(--color-muted)]">10 + WIS mod{perceptionProf ? " + prof" : ""}</div>
+        </div>
       </div>
 
       <div className="j-affliction">
