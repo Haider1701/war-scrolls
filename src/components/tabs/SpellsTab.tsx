@@ -99,7 +99,7 @@ export function SpellsTab({ characterId, readOnly }: { characterId: string; read
     <div className="j-fade space-y-6">
       <div className="j-card grid grid-cols-2 md:grid-cols-4 gap-4">
         <MetaField label="Ability" value={meta.spellcasting_ability} readOnly={readOnly}
-          onChange={(v) => updateMeta({ spellcasting_ability: v })} hint="STR / DEX / CON / INT / WIS / CHA" />
+          onChange={(v) => updateMeta({ spellcasting_ability: v })} />
         <div>
           <div className="text-[10px] uppercase tracking-widest text-[var(--color-muted)] mb-1">Save DC</div>
           <div className="j-h text-2xl">{abilityKey ? derivedDC : "—"}</div>
