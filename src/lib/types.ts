@@ -4,6 +4,7 @@ export type Character = {
   name: string;
   subtitle: string;
   class_level: string;
+  class_level_2: string | null;
   race: string;
   alignment: string;
   background: string;
@@ -22,6 +23,19 @@ export type Character = {
   backstory: string;
   features: { title: string; description: string }[];
 };
+
+// Extract trailing integer from strings like "War Cleric 3" -> 3
+export const parseLevel = (s?: string | null): number => {
+  if (!s) return 0;
+  const m = String(s).match(/(\d+)\s*$/);
+  return m ? parseInt(m[1], 10) : 0;
+};
+export const totalLevel = (c: Pick<Character, "class_level" | "class_level_2">) =>
+  parseLevel(c.class_level) + parseLevel(c.class_level_2);
+// 5e proficiency bonus from total character level
+export const profBonusForLevel = (lvl: number) => 2 + Math.floor((Math.max(1, lvl) - 1) / 4);
+export const formatMulticlass = (a?: string | null, b?: string | null) =>
+  [a, b].filter((s) => s && String(s).trim().length > 0).join(" / ");
 
 export type Abilities = {
   id?: string;

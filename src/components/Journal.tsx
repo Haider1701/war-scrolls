@@ -127,7 +127,7 @@ export function Journal({
           {tab === "cover" && <CoverTab character={character} onChange={async (c) => {
             setCharacter(c);
             await (supabase as any).from("characters").update({
-              name: c.name, subtitle: c.subtitle, class_level: c.class_level,
+              name: c.name, subtitle: c.subtitle, class_level: c.class_level, class_level_2: c.class_level_2,
               race: c.race, alignment: c.alignment, background: c.background,
               proficiency_bonus: c.proficiency_bonus, passive_perception: c.passive_perception,
               affliction_note: c.affliction_note, image_url: c.image_url,

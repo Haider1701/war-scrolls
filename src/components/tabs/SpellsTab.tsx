@@ -1,8 +1,19 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Spell, SpellMeta } from "@/lib/types";
+import { abilityMod, profBonusForLevel, totalLevel } from "@/lib/types";
 
 const db = supabase as any;
+
+const ABILITY_KEYS: Record<string, string> = {
+  INT: "intelligence", WIS: "wisdom", CHA: "charisma",
+  STR: "strength", DEX: "dexterity", CON: "constitution",
+};
+function abilityKeyFor(label: string): string | null {
+  if (!label) return null;
+  const up = label.trim().slice(0, 3).toUpperCase();
+  return ABILITY_KEYS[up] ?? null;
+}
 
 const SCHOOLS = ["Abjuration","Conjuration","Divination","Enchantment","Evocation","Illusion","Necromancy","Transmutation"];
 
@@ -10,17 +21,42 @@ export function SpellsTab({ characterId, readOnly }: { characterId: string; read
   const [meta, setMeta] = useState<SpellMeta | null>(null);
   const [spells, setSpells] = useState<Spell[]>([]);
   const [adding, setAdding] = useState<number | null>(null);
+  const [abilities, setAbilities] = useState<any>(null);
+  const [profBonus, setProfBonus] = useState<number>(2);
 
   useEffect(() => {
     (async () => {
-      const [m, s] = await Promise.all([
+      const [m, s, a, c] = await Promise.all([
         db.from("spell_meta").select("*").eq("character_id", characterId).maybeSingle(),
         db.from("spells").select("*").eq("character_id", characterId).order("spell_level"),
+        db.from("ability_scores").select("*").eq("character_id", characterId).maybeSingle(),
+        db.from("characters").select("class_level,class_level_2,proficiency_bonus").eq("id", characterId).maybeSingle(),
       ]);
       setMeta(m.data);
       setSpells(s.data ?? []);
+      setAbilities(a.data ?? null);
+      const lvl = totalLevel(c.data ?? { class_level: "", class_level_2: "" });
+      setProfBonus(lvl > 0 ? profBonusForLevel(lvl) : (c.data?.proficiency_bonus ?? 2));
     })();
   }, [characterId]);
+
+  // Derived spell DC / Atk bonus
+  const abilityKey = abilityKeyFor(meta?.spellcasting_ability ?? "");
+  const abilityScore = abilityKey && abilities ? abilities[abilityKey] ?? 10 : 10;
+  const abilityModNum = abilityMod(abilityScore);
+  const derivedDC = 8 + profBonus + abilityModNum;
+  const derivedAtk = profBonus + abilityModNum;
+
+  // Persist derived DC / Atk so saved record stays consistent
+  useEffect(() => {
+    if (!meta || !abilityKey) return;
+    if (meta.spell_save_dc !== derivedDC || meta.spell_attack_bonus !== derivedAtk) {
+      const patch = { spell_save_dc: derivedDC, spell_attack_bonus: derivedAtk };
+      setMeta({ ...meta, ...patch });
+      db.from("spell_meta").update(patch).eq("character_id", characterId);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [derivedDC, derivedAtk, abilityKey]);
 
   async function updateMeta(patch: Partial<SpellMeta>) {
     if (!meta) return;
@@ -64,10 +100,16 @@ export function SpellsTab({ characterId, readOnly }: { characterId: string; read
       <div className="j-card grid grid-cols-2 md:grid-cols-4 gap-4">
         <MetaField label="Ability" value={meta.spellcasting_ability} readOnly={readOnly}
           onChange={(v) => updateMeta({ spellcasting_ability: v })} />
-        <MetaNum label="Save DC" value={meta.spell_save_dc} readOnly={readOnly}
-          onChange={(v) => updateMeta({ spell_save_dc: v })} />
-        <MetaNum label="Atk Bonus" value={meta.spell_attack_bonus} readOnly={readOnly}
-          onChange={(v) => updateMeta({ spell_attack_bonus: v })} />
+        <div>
+          <div className="text-[10px] uppercase tracking-widest text-[var(--color-muted)] mb-1">Save DC</div>
+          <div className="j-h text-2xl">{abilityKey ? derivedDC : "—"}</div>
+          <div className="text-[10px] italic text-[var(--color-muted)]">8 + prof + mod</div>
+        </div>
+        <div>
+          <div className="text-[10px] uppercase tracking-widest text-[var(--color-muted)] mb-1">Atk Bonus</div>
+          <div className="j-h text-2xl">{abilityKey ? (derivedAtk >= 0 ? `+${derivedAtk}` : derivedAtk) : "—"}</div>
+          <div className="text-[10px] italic text-[var(--color-muted)]">prof + mod</div>
+        </div>
         <div>
           <div className="text-[10px] uppercase tracking-widest text-[var(--color-muted)] mb-1">Slot Setup</div>
           <div className="text-xs text-[var(--color-muted)]">Edit max in tracker below</div>
