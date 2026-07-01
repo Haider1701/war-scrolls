@@ -168,15 +168,24 @@ export function StatsTab({ character, onChange, readOnly }: {
               {attacks.length === 0 && (
                 <tr><td colSpan={5} className="text-center text-[var(--color-muted)] italic py-4">No weapons recorded</td></tr>
               )}
-              {attacks.map((a) => (
-                <tr key={a.id} className="border-t border-[rgba(255,106,0,0.1)]">
-                  <td className="py-2"><input className="j-input" value={a.weapon_name} disabled={readOnly} onChange={(e) => updateAttack(a, { weapon_name: e.target.value })} /></td>
-                  <td><input className="j-input text-center" value={a.attack_bonus} disabled={readOnly} onChange={(e) => updateAttack(a, { attack_bonus: e.target.value })} /></td>
-                  <td><input className="j-input text-center" value={a.damage_dice} disabled={readOnly} onChange={(e) => updateAttack(a, { damage_dice: e.target.value })} /></td>
-                  <td><input className="j-input text-center" value={a.damage_type} disabled={readOnly} onChange={(e) => updateAttack(a, { damage_type: e.target.value })} /></td>
-                  <td className="text-right">{!readOnly && <button className="text-[var(--color-blood)] px-2" onClick={() => removeAttack(a.id)}>✕</button>}</td>
-                </tr>
-              ))}
+              {attacks.map((a) => {
+                const attackBonus = parseModifier(a.attack_bonus);
+                // Extract damage formula: split on space; take first token that looks like NdN
+                const dmg = (a.damage_dice || "").trim();
+                const rollAttack = () => openRoll({ kind: "attack", label: a.weapon_name || "Attack", attackBonus, damageFormula: dmg || "1d4" });
+                return (
+                  <tr key={a.id}
+                    className={`border-t border-[rgba(255,106,0,0.1)] ${readOnly ? "cursor-pointer hover:bg-[rgba(255,106,0,0.08)] transition" : ""}`}
+                    onClick={readOnly ? rollAttack : undefined}
+                    title={readOnly ? "Roll attack + damage" : undefined}>
+                    <td className="py-2"><input className="j-input" value={a.weapon_name} disabled={readOnly} onChange={(e) => updateAttack(a, { weapon_name: e.target.value })} /></td>
+                    <td><input className="j-input text-center" value={a.attack_bonus} disabled={readOnly} onChange={(e) => updateAttack(a, { attack_bonus: e.target.value })} /></td>
+                    <td><input className="j-input text-center" value={a.damage_dice} disabled={readOnly} onChange={(e) => updateAttack(a, { damage_dice: e.target.value })} /></td>
+                    <td><input className="j-input text-center" value={a.damage_type} disabled={readOnly} onChange={(e) => updateAttack(a, { damage_type: e.target.value })} /></td>
+                    <td className="text-right">{readOnly ? <span className="text-[var(--color-muted)] text-xs pr-2">🎲</span> : <button className="text-[var(--color-blood)] px-2" onClick={(e) => { e.stopPropagation(); removeAttack(a.id); }}>✕</button>}</td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
