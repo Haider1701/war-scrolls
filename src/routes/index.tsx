@@ -8,6 +8,8 @@ import { Journal } from "@/components/Journal";
 import { NpcPage } from "@/components/NpcPage";
 import { CharacterSelect } from "@/components/CharacterSelect";
 import { ToastProvider } from "@/components/Toast";
+import { ThemeProvider } from "@/components/ThemeProvider";
+import { DiceRollerProvider } from "@/components/DiceRoller";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -95,47 +97,52 @@ function Index() {
   const active = characters.find((c) => c.id === activeId) ?? null;
 
   return (
-    <ToastProvider>
-      {!userId ? (
-        <AuthScreen />
-      ) : creating || characters.length === 0 ? (
-        <CreateWizard
-          userId={userId}
-          onDone={async (newId?: string) => {
-            await reload(newId ?? null);
-            if (newId) selectActive(newId);
-          }}
-          onCancel={characters.length > 0 ? () => setCreating(false) : undefined}
-        />
-      ) : !active ? (
-        <CharacterSelect
-          characters={characters}
-          onPlay={(id) => selectActive(id)}
-          onCreate={() => setCreating(true)}
-          onDeleted={() => reload(null)}
-          onSignOut={signOut}
-        />
-      ) : active.character_type === "npc" ? (
-        <NpcPage
-          key={active.id}
-          initial={active}
-          characters={characters}
-          onSwitch={(id) => selectActive(id)}
-          onBackToSelect={() => selectActive(null)}
-          onCreateNew={() => setCreating(true)}
-          onSignOut={signOut}
-        />
-      ) : (
-        <Journal
-          key={active.id}
-          initial={active}
-          characters={characters}
-          onSwitch={(id) => selectActive(id)}
-          onBackToSelect={() => selectActive(null)}
-          onCreateNew={() => setCreating(true)}
-          onSignOut={signOut}
-        />
-      )}
-    </ToastProvider>
+    <ThemeProvider userId={userId}>
+      <ToastProvider>
+        <DiceRollerProvider>
+          {!userId ? (
+            <AuthScreen />
+          ) : creating || characters.length === 0 ? (
+            <CreateWizard
+              userId={userId}
+              onDone={async (newId?: string) => {
+                await reload(newId ?? null);
+                if (newId) selectActive(newId);
+              }}
+              onCancel={characters.length > 0 ? () => setCreating(false) : undefined}
+            />
+          ) : !active ? (
+            <CharacterSelect
+              characters={characters}
+              onPlay={(id) => selectActive(id)}
+              onCreate={() => setCreating(true)}
+              onDeleted={() => reload(null)}
+              onSignOut={signOut}
+            />
+          ) : active.character_type === "npc" ? (
+            <NpcPage
+              key={active.id}
+              initial={active}
+              characters={characters}
+              onSwitch={(id) => selectActive(id)}
+              onBackToSelect={() => selectActive(null)}
+              onCreateNew={() => setCreating(true)}
+              onSignOut={signOut}
+            />
+          ) : (
+            <Journal
+              key={active.id}
+              initial={active}
+              userId={userId}
+              characters={characters}
+              onSwitch={(id) => selectActive(id)}
+              onBackToSelect={() => selectActive(null)}
+              onCreateNew={() => setCreating(true)}
+              onSignOut={signOut}
+            />
+          )}
+        </DiceRollerProvider>
+      </ToastProvider>
+    </ThemeProvider>
   );
 }
