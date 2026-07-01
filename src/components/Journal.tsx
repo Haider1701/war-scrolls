@@ -10,6 +10,9 @@ import { SpellsTab } from "./tabs/SpellsTab";
 import { SessionsTab } from "./tabs/SessionsTab";
 import { NpcsGearTab } from "./tabs/NpcsGearTab";
 import { NotesTab } from "./tabs/NotesTab";
+import { DiceTrayTab } from "./tabs/DiceTrayTab";
+import { SettingsPanel } from "./SettingsPanel";
+import { GmNotifications } from "./GmNotifications";
 
 const TABS = [
   { id: "cover", label: "Cover" },
@@ -19,14 +22,16 @@ const TABS = [
   { id: "sessions", label: "Sessions" },
   { id: "npcs", label: "NPCs & Gear" },
   { id: "notes", label: "Notes" },
+  { id: "dice", label: "Dice Tray" },
 ];
 
 type FlipDir = "next" | "prev" | null;
 
 export function Journal({
-  initial, characters, onSwitch, onBackToSelect, onCreateNew, onSignOut,
+  initial, userId, characters, onSwitch, onBackToSelect, onCreateNew, onSignOut,
 }: {
   initial: Character;
+  userId: string;
   characters: Character[];
   onSwitch: (id: string) => void;
   onBackToSelect: () => void;
@@ -34,6 +39,13 @@ export function Journal({
   onSignOut: () => void;
 }) {
   const [character, setCharacter] = useState<Character>(initial);
+  const [tab, setTab] = useState("cover");
+  const [pendingTab, setPendingTab] = useState<string | null>(null);
+  const [flipDir, setFlipDir] = useState<FlipDir>(null);
+  const [readOnly, setReadOnly] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
   const [tab, setTab] = useState("cover");
   // Content shown beneath the flipping page (becomes new current after animation)
   const [pendingTab, setPendingTab] = useState<string | null>(null);
