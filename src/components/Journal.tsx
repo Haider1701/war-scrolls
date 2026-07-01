@@ -110,6 +110,7 @@ export function Journal({
     if (id === "sessions") return <SessionsTab characterId={character.id} readOnly={readOnly} />;
     if (id === "npcs") return <NpcsGearTab characterId={character.id} readOnly={readOnly} />;
     if (id === "notes") return <NotesTab characterId={character.id} readOnly={readOnly} />;
+    if (id === "dice") return <DiceTrayTab />;
     return null;
   }
 
