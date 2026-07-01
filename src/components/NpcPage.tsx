@@ -7,7 +7,7 @@ import { CharacterGallery } from "./CharacterGallery";
 import { useToast } from "./Toast";
 
 const db = supabase as any;
-const DISPS = ["ally", "neutral", "hostile", "missing"] as const;
+const DISPS = ["ally", "neutral", "hostile", "missing", "deceased"] as const;
 
 export function NpcPage({
   initial, characters, onSwitch, onBackToSelect, onCreateNew, onSignOut,
@@ -76,7 +76,7 @@ export function NpcPage({
       </header>
 
       <main className="max-w-5xl mx-auto p-4 md:p-8">
-        <div className="j-page p-6 md:p-10 pl-12 md:pl-16 relative">
+        <div className={`j-page p-6 md:p-10 pl-12 md:pl-16 relative ${readOnly && disposition === "deceased" ? "npc-dead-preview" : ""}`}>
           <div className="j-spine" />
           <div className="grid md:grid-cols-[1fr_2fr] gap-6">
             {/* LEFT: portrait + gallery */}

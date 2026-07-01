@@ -10,6 +10,9 @@ import { SpellsTab } from "./tabs/SpellsTab";
 import { SessionsTab } from "./tabs/SessionsTab";
 import { NpcsGearTab } from "./tabs/NpcsGearTab";
 import { NotesTab } from "./tabs/NotesTab";
+import { DiceTrayTab } from "./tabs/DiceTrayTab";
+import { SettingsPanel } from "./SettingsPanel";
+import { GmNotifications } from "./GmNotifications";
 
 const TABS = [
   { id: "cover", label: "Cover" },
@@ -19,14 +22,16 @@ const TABS = [
   { id: "sessions", label: "Sessions" },
   { id: "npcs", label: "NPCs & Gear" },
   { id: "notes", label: "Notes" },
+  { id: "dice", label: "Dice Tray" },
 ];
 
 type FlipDir = "next" | "prev" | null;
 
 export function Journal({
-  initial, characters, onSwitch, onBackToSelect, onCreateNew, onSignOut,
+  initial, userId, characters, onSwitch, onBackToSelect, onCreateNew, onSignOut,
 }: {
   initial: Character;
+  userId: string;
   characters: Character[];
   onSwitch: (id: string) => void;
   onBackToSelect: () => void;
@@ -35,12 +40,14 @@ export function Journal({
 }) {
   const [character, setCharacter] = useState<Character>(initial);
   const [tab, setTab] = useState("cover");
-  // Content shown beneath the flipping page (becomes new current after animation)
   const [pendingTab, setPendingTab] = useState<string | null>(null);
   const [flipDir, setFlipDir] = useState<FlipDir>(null);
   const [readOnly, setReadOnly] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+
+
 
   const players = characters.filter((c) => c.character_type === "player");
 
@@ -103,6 +110,7 @@ export function Journal({
     if (id === "sessions") return <SessionsTab characterId={character.id} readOnly={readOnly} />;
     if (id === "npcs") return <NpcsGearTab characterId={character.id} readOnly={readOnly} />;
     if (id === "notes") return <NotesTab characterId={character.id} readOnly={readOnly} />;
+    if (id === "dice") return <DiceTrayTab />;
     return null;
   }
 
@@ -161,11 +169,14 @@ export function Journal({
           </div>
 
           <div className="flex-1" />
+          <GmNotifications userId={userId} />
+          <button className="j-btn j-btn-ghost" title="Settings" onClick={() => setSettingsOpen(true)}>⚙️</button>
           <button className={`j-btn ${readOnly ? "" : "j-btn-ghost"}`} onClick={() => setReadOnly(!readOnly)}>
             {readOnly ? "Edit Mode" : "Preview Mode"}
           </button>
           <button className="j-btn j-btn-ghost" onClick={onSignOut}>Sign Out</button>
         </div>
+        {settingsOpen && <SettingsPanel userId={userId} onClose={() => setSettingsOpen(false)} />}
         <div className="max-w-6xl mx-auto px-3 md:px-4 flex gap-1 overflow-x-auto scrollbar-thin">
           {TABS.map((t) => (
             <button key={t.id} className={`j-tab ${tab === t.id ? "active" : ""}`} onClick={() => go(t.id)}>

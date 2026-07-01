@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Spell, SpellMeta } from "@/lib/types";
 import { abilityMod, profBonusForLevel, totalLevel } from "@/lib/types";
+import { loadSpells, searchSpells, type ApiSpell } from "@/lib/spellSearch";
 
 const db = supabase as any;
 

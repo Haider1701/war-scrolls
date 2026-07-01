@@ -311,6 +311,54 @@ export type Database = {
           },
         ]
       }
+      gm_notifications: {
+        Row: {
+          created_at: string
+          from_character_id: string | null
+          from_user_id: string
+          gm_user_id: string
+          id: string
+          is_read: boolean
+          message: string
+          spell_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          from_character_id?: string | null
+          from_user_id: string
+          gm_user_id: string
+          id?: string
+          is_read?: boolean
+          message?: string
+          spell_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          from_character_id?: string | null
+          from_user_id?: string
+          gm_user_id?: string
+          id?: string
+          is_read?: boolean
+          message?: string
+          spell_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gm_notifications_from_character_id_fkey"
+            columns: ["from_character_id"]
+            isOneToOne: false
+            referencedRelation: "characters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gm_notifications_spell_id_fkey"
+            columns: ["spell_id"]
+            isOneToOne: false
+            referencedRelation: "spells"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       npcs: {
         Row: {
           character_id: string
@@ -470,7 +518,10 @@ export type Database = {
           components: string | null
           description: string | null
           duration: string | null
+          gm_approved: boolean
+          gm_denied: boolean
           id: string
+          is_homebrew: boolean
           name: string | null
           range: string | null
           school: string | null
@@ -483,7 +534,10 @@ export type Database = {
           components?: string | null
           description?: string | null
           duration?: string | null
+          gm_approved?: boolean
+          gm_denied?: boolean
           id?: string
+          is_homebrew?: boolean
           name?: string | null
           range?: string | null
           school?: string | null
@@ -496,7 +550,10 @@ export type Database = {
           components?: string | null
           description?: string | null
           duration?: string | null
+          gm_approved?: boolean
+          gm_denied?: boolean
           id?: string
+          is_homebrew?: boolean
           name?: string | null
           range?: string | null
           school?: string | null
@@ -547,6 +604,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_preferences: {
+        Row: {
+          created_at: string
+          is_gm: boolean
+          theme: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          is_gm?: boolean
+          theme?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          is_gm?: boolean
+          theme?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
     }
     Views: {

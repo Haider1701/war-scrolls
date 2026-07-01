@@ -1,6 +1,8 @@
 import { useMemo } from "react";
+import { useTheme } from "./ThemeProvider";
 
 export function Embers({ count = 22 }: { count?: number }) {
+  const { theme } = useTheme();
   const seeds = useMemo(
     () =>
       Array.from({ length: count }, (_, i) => ({
@@ -13,6 +15,7 @@ export function Embers({ count = 22 }: { count?: number }) {
       })),
     [count],
   );
+  if (theme === "tome") return null;
   return (
     <>
       {seeds.map((s) => (

@@ -77,6 +77,9 @@ export type Spell = {
   name: string; school: string; casting_time: string;
   range: string; components: string; duration: string;
   description: string; upcast_note: string;
+  is_homebrew?: boolean;
+  gm_approved?: boolean;
+  gm_denied?: boolean;
 };
 
 export type SpellMeta = {
@@ -94,10 +97,12 @@ export type Session = {
   notes: string[]; encounter_notes: string;
 };
 
+export type Disposition = "ally" | "neutral" | "hostile" | "missing" | "deceased";
+
 export type NPC = {
   id: string; character_id: string;
   name: string; role: string; description: string;
-  disposition: "ally" | "neutral" | "hostile" | "missing";
+  disposition: Disposition;
   emoji_icon: string;
 };
 

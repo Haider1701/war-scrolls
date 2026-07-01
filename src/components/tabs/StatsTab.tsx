@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Abilities, Attack, Character, Skill } from "@/lib/types";
 import { SKILL_LIST, SAVE_LIST, abilityMod, fmtMod } from "@/lib/types";
+import { useDiceRoller } from "@/components/DiceRoller";
+import { parseModifier } from "@/lib/dice";
 
 const db = supabase as any;
 
@@ -20,6 +22,7 @@ export function StatsTab({ character, onChange, readOnly }: {
   const [abilities, setAbilities] = useState<Abilities | null>(null);
   const [attacks, setAttacks] = useState<Attack[]>([]);
   const [skillProf, setSkillProf] = useState<Record<string, Skill>>({});
+  const openRoll = useDiceRoller();
 
   useEffect(() => {
     (async () => {
@@ -88,13 +91,19 @@ export function StatsTab({ character, onChange, readOnly }: {
   function ProfRow({ name, ability, emoji, kind }: { name: string; ability: keyof Abilities; emoji: string; kind: "skill" | "save" }) {
     const prof = skillProf[`${kind}:${name}`]?.proficient ?? false;
     const mod = abilityMod((abilities as any)[ability]) + (prof ? character.proficiency_bonus : 0);
+    const rollIt = () => openRoll({ kind, label: name, modifier: mod });
     return (
-      <div className="flex items-center gap-3 py-1.5 border-b border-[rgba(255,106,0,0.08)]">
-        <span className={`j-prof-dot ${prof ? "on" : ""}`} onClick={() => toggleProf(kind, name)} role={readOnly ? undefined : "button"} />
+      <div
+        className={`flex items-center gap-3 py-1.5 border-b border-[rgba(255,106,0,0.08)] ${readOnly ? "cursor-pointer hover:bg-[rgba(255,106,0,0.08)] rounded px-1 transition" : ""}`}
+        onClick={readOnly ? rollIt : undefined}
+        title={readOnly ? `Roll ${name} (${fmtMod(mod)})` : undefined}
+      >
+        <span className={`j-prof-dot ${prof ? "on" : ""}`} onClick={(e) => { e.stopPropagation(); toggleProf(kind, name); }} role={readOnly ? undefined : "button"} />
         <span className="text-[var(--color-flame)] w-10 font-mono">{fmtMod(mod)}</span>
         <span>{emoji}</span>
         <span className="flex-1">{name}</span>
         <span className="text-[var(--color-muted)] text-xs uppercase">{ability.slice(0,3)}</span>
+        {readOnly && <span className="text-[var(--color-muted)] text-xs">🎲</span>}
       </div>
     );
   }
@@ -159,15 +168,24 @@ export function StatsTab({ character, onChange, readOnly }: {
               {attacks.length === 0 && (
                 <tr><td colSpan={5} className="text-center text-[var(--color-muted)] italic py-4">No weapons recorded</td></tr>
               )}
-              {attacks.map((a) => (
-                <tr key={a.id} className="border-t border-[rgba(255,106,0,0.1)]">
-                  <td className="py-2"><input className="j-input" value={a.weapon_name} disabled={readOnly} onChange={(e) => updateAttack(a, { weapon_name: e.target.value })} /></td>
-                  <td><input className="j-input text-center" value={a.attack_bonus} disabled={readOnly} onChange={(e) => updateAttack(a, { attack_bonus: e.target.value })} /></td>
-                  <td><input className="j-input text-center" value={a.damage_dice} disabled={readOnly} onChange={(e) => updateAttack(a, { damage_dice: e.target.value })} /></td>
-                  <td><input className="j-input text-center" value={a.damage_type} disabled={readOnly} onChange={(e) => updateAttack(a, { damage_type: e.target.value })} /></td>
-                  <td className="text-right">{!readOnly && <button className="text-[var(--color-blood)] px-2" onClick={() => removeAttack(a.id)}>✕</button>}</td>
-                </tr>
-              ))}
+              {attacks.map((a) => {
+                const attackBonus = parseModifier(a.attack_bonus);
+                // Extract damage formula: split on space; take first token that looks like NdN
+                const dmg = (a.damage_dice || "").trim();
+                const rollAttack = () => openRoll({ kind: "attack", label: a.weapon_name || "Attack", attackBonus, damageFormula: dmg || "1d4" });
+                return (
+                  <tr key={a.id}
+                    className={`border-t border-[rgba(255,106,0,0.1)] ${readOnly ? "cursor-pointer hover:bg-[rgba(255,106,0,0.08)] transition" : ""}`}
+                    onClick={readOnly ? rollAttack : undefined}
+                    title={readOnly ? "Roll attack + damage" : undefined}>
+                    <td className="py-2"><input className="j-input" value={a.weapon_name} disabled={readOnly} onChange={(e) => updateAttack(a, { weapon_name: e.target.value })} /></td>
+                    <td><input className="j-input text-center" value={a.attack_bonus} disabled={readOnly} onChange={(e) => updateAttack(a, { attack_bonus: e.target.value })} /></td>
+                    <td><input className="j-input text-center" value={a.damage_dice} disabled={readOnly} onChange={(e) => updateAttack(a, { damage_dice: e.target.value })} /></td>
+                    <td><input className="j-input text-center" value={a.damage_type} disabled={readOnly} onChange={(e) => updateAttack(a, { damage_type: e.target.value })} /></td>
+                    <td className="text-right">{readOnly ? <span className="text-[var(--color-muted)] text-xs pr-2">🎲</span> : <button className="text-[var(--color-blood)] px-2" onClick={(e) => { e.stopPropagation(); removeAttack(a.id); }}>✕</button>}</td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
