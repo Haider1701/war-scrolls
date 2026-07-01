@@ -46,13 +46,8 @@ export function Journal({
   const [menuOpen, setMenuOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
-  const [tab, setTab] = useState("cover");
-  // Content shown beneath the flipping page (becomes new current after animation)
-  const [pendingTab, setPendingTab] = useState<string | null>(null);
-  const [flipDir, setFlipDir] = useState<FlipDir>(null);
-  const [readOnly, setReadOnly] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
+
+
 
   const players = characters.filter((c) => c.character_type === "player");
 
