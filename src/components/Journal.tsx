@@ -169,11 +169,14 @@ export function Journal({
           </div>
 
           <div className="flex-1" />
+          <GmNotifications userId={userId} />
+          <button className="j-btn j-btn-ghost" title="Settings" onClick={() => setSettingsOpen(true)}>⚙️</button>
           <button className={`j-btn ${readOnly ? "" : "j-btn-ghost"}`} onClick={() => setReadOnly(!readOnly)}>
             {readOnly ? "Edit Mode" : "Preview Mode"}
           </button>
           <button className="j-btn j-btn-ghost" onClick={onSignOut}>Sign Out</button>
         </div>
+        {settingsOpen && <SettingsPanel userId={userId} onClose={() => setSettingsOpen(false)} />}
         <div className="max-w-6xl mx-auto px-3 md:px-4 flex gap-1 overflow-x-auto scrollbar-thin">
           {TABS.map((t) => (
             <button key={t.id} className={`j-tab ${tab === t.id ? "active" : ""}`} onClick={() => go(t.id)}>
