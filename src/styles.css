@@ -257,6 +257,9 @@ input:focus, textarea:focus { outline: none; }
 .disposition-neutral { background: rgba(255,184,48,0.15); color: var(--color-flame-2); border: 1px solid rgba(255,184,48,0.5); }
 .disposition-hostile { background: rgba(196,48,48,0.18); color: #f0a8a8; border: 1px solid var(--color-blood); }
 .disposition-missing { background: rgba(106,31,31,0.3); color: #8a5050; border: 1px solid var(--color-missing); }
+.disposition-deceased { background: rgba(40,40,44,0.6); color: #d8d8dc; border: 1px solid #5a5a60; }
+.disposition-deceased::before { content: "💀 "; }
+.npc-dead-preview { filter: grayscale(1) brightness(0.7); }
 
 /* === Page-turn animation === */
 .j-flip-stage {
