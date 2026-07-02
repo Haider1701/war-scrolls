@@ -1,3 +1,5 @@
+import type { CustomTheme, ThemeId } from "./themes";
+
 export type CharacterType = "player" | "npc";
 
 export type Character = {
@@ -27,6 +29,8 @@ export type Character = {
   features: { title: string; description: string }[];
   npc_quotes: string;
   npc_actions: string;
+  theme?: ThemeId | null;
+  custom_theme?: CustomTheme | null;
 };
 
 export type CharacterImage = {

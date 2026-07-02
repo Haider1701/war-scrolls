@@ -1,52 +1,74 @@
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { createContext, useContext, useEffect, type ReactNode } from "react";
+import type { Character } from "@/lib/types";
+import { THEMES, FONT_PAIRS, type ThemeId, type CustomTheme, fontPair } from "@/lib/themes";
 
-export type ThemeId = "ember" | "frost" | "tome";
+export { THEMES, FONT_PAIRS, fontPair };
+export type { ThemeId, CustomTheme };
 
-export const THEMES: { id: ThemeId; name: string; swatches: string[]; description: string }[] = [
-  { id: "ember", name: "Fire & Ember",  swatches: ["#100b03", "#ff6a00", "#ffb830", "#c43030"], description: "Dark forge, glowing embers." },
-  { id: "frost", name: "Arcane Frost",  swatches: ["#050d1a", "#0a1628", "#4dd9ff", "#c8f0ff"], description: "Icy magic under a midnight sky." },
-  { id: "tome",  name: "Ancient Tome",  swatches: ["#2a1f0e", "#c8960a", "#3a6b35", "#2d1a06"], description: "Sepia parchment, aged ink." },
+type Ctx = {
+  theme: ThemeId;
+  customTheme: CustomTheme | null;
+  activeCharacter: Character | null;
+  saveTheme: (patch: { theme?: ThemeId; custom_theme?: CustomTheme | null }) => Promise<void>;
+};
+
+const ThemeCtx = createContext<Ctx>({
+  theme: "ember",
+  customTheme: null,
+  activeCharacter: null,
+  saveTheme: async () => {},
+});
+export const useTheme = () => useContext(ThemeCtx);
+
+const CUSTOM_VAR_KEYS = [
+  "--color-coal","--color-page","--color-page-2",
+  "--color-ember","--color-ember-2","--color-flame","--color-flame-2",
+  "--color-ink","--color-muted","--color-blood",
 ];
 
-const Ctx = createContext<{ theme: ThemeId; setTheme: (t: ThemeId) => void }>({
-  theme: "ember",
-  setTheme: () => {},
-});
-export const useTheme = () => useContext(Ctx);
+export function ThemeProvider({
+  character, onSaveCharacterTheme, children,
+}: {
+  character: Character | null;
+  onSaveCharacterTheme: (patch: { theme?: ThemeId; custom_theme?: CustomTheme | null }) => Promise<void>;
+  children: ReactNode;
+}) {
+  const themeId: ThemeId = ((character?.theme as ThemeId) || "ember");
+  const customTheme = (character?.custom_theme as CustomTheme | null) ?? null;
 
-const LS = "ember-codex.theme";
-const db = supabase as any;
-
-export function ThemeProvider({ userId, children }: { userId: string | null; children: ReactNode }) {
-  const [theme, setThemeState] = useState<ThemeId>(() => {
-    if (typeof window === "undefined") return "ember";
-    return (window.localStorage.getItem(LS) as ThemeId) || "ember";
-  });
-
-  // Apply to <html data-theme>
   useEffect(() => {
     if (typeof document === "undefined") return;
-    document.documentElement.setAttribute("data-theme", theme);
-  }, [theme]);
+    const el = document.documentElement;
+    el.setAttribute("data-theme", themeId);
 
-  // Load from DB when user logs in
-  useEffect(() => {
-    if (!userId) return;
-    (async () => {
-      const { data } = await db.from("user_preferences").select("theme").eq("user_id", userId).maybeSingle();
-      if (data?.theme) {
-        setThemeState(data.theme as ThemeId);
-        window.localStorage.setItem(LS, data.theme);
-      }
-    })();
-  }, [userId]);
+    // Font pair
+    const preset = THEMES.find((t) => t.id === themeId);
+    const pairId = themeId === "custom" ? customTheme?.fontPairId : preset?.fontPairId;
+    const pair = fontPair(pairId);
+    el.style.setProperty("--font-uncial", `"${pair.heading}", serif`);
+    el.style.setProperty("--font-fell", `"${pair.body}", serif`);
 
-  const setTheme = useCallback((t: ThemeId) => {
-    setThemeState(t);
-    if (typeof window !== "undefined") window.localStorage.setItem(LS, t);
-    if (userId) db.from("user_preferences").upsert({ user_id: userId, theme: t }, { onConflict: "user_id" }).then(() => {});
-  }, [userId]);
+    // Custom colors
+    if (themeId === "custom" && customTheme) {
+      const c = customTheme.colors;
+      el.style.setProperty("--color-coal", c.coal);
+      el.style.setProperty("--color-page", c.page);
+      el.style.setProperty("--color-page-2", c.page2 || c.page);
+      el.style.setProperty("--color-ember", c.ember);
+      el.style.setProperty("--color-ember-2", c.ember2 || c.ember);
+      el.style.setProperty("--color-flame", c.flame);
+      el.style.setProperty("--color-flame-2", c.flame2 || c.flame);
+      el.style.setProperty("--color-ink", c.ink);
+      el.style.setProperty("--color-muted", c.muted);
+      el.style.setProperty("--color-blood", c.blood);
+    } else {
+      CUSTOM_VAR_KEYS.forEach((k) => el.style.removeProperty(k));
+    }
+  }, [themeId, customTheme]);
 
-  return <Ctx.Provider value={{ theme, setTheme }}>{children}</Ctx.Provider>;
+  return (
+    <ThemeCtx.Provider value={{ theme: themeId, customTheme, activeCharacter: character, saveTheme: onSaveCharacterTheme }}>
+      {children}
+    </ThemeCtx.Provider>
+  );
 }

@@ -3,6 +3,7 @@ import { useTheme } from "./ThemeProvider";
 
 export function Embers({ count = 22 }: { count?: number }) {
   const { theme } = useTheme();
+
   const seeds = useMemo(
     () =>
       Array.from({ length: count }, (_, i) => ({
@@ -15,13 +16,21 @@ export function Embers({ count = 22 }: { count?: number }) {
       })),
     [count],
   );
+
   if (theme === "tome") return null;
+
+  const cls =
+    theme === "shadow" ? "ember ember-shadow" :
+    theme === "druid"  ? "ember ember-druid"  :
+    theme === "frost"  ? "ember ember-frost"  :
+    "ember";
+
   return (
     <>
       {seeds.map((s) => (
         <span
           key={s.key}
-          className="ember"
+          className={cls}
           style={{
             left: `${s.left}%`,
             width: s.size,

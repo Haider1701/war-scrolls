@@ -96,8 +96,14 @@ function Index() {
 
   const active = characters.find((c) => c.id === activeId) ?? null;
 
+  async function saveCharacterTheme(patch: { theme?: any; custom_theme?: any }) {
+    if (!active) return;
+    await db.from("characters").update(patch).eq("id", active.id);
+    setCharacters((cs) => cs.map((c) => (c.id === active.id ? { ...c, ...patch } : c)));
+  }
+
   return (
-    <ThemeProvider userId={userId}>
+    <ThemeProvider character={active} onSaveCharacterTheme={saveCharacterTheme}>
       <ToastProvider>
         <DiceRollerProvider>
           {!userId ? (

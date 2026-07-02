@@ -479,6 +479,76 @@ html[data-theme="tome"] .j-btn:hover { box-shadow: 0 3px 8px -2px rgba(0,0,0,0.4
 html[data-theme="tome"] .ember { display: none; }
 html[data-theme="tome"] .j-spine { background: linear-gradient(90deg, #5a3f18, #8a6a3a); }
 
+/* Shadow Rogue theme */
+html[data-theme="shadow"] {
+  --color-coal: #0a0010;
+  --color-page: #14061f;
+  --color-page-2: #1c0a2a;
+  --color-ember: #9b30ff;
+  --color-ember-2: #b45cff;
+  --color-flame: #c87dff;
+  --color-flame-2: #d9a3ff;
+  --color-ink: #e8d5ff;
+  --color-muted: #7a5a9a;
+  --color-blood: #ff4d8a;
+}
+html[data-theme="shadow"] * { border-color: rgba(155,48,255,0.25); }
+html[data-theme="shadow"] .j-h { text-shadow: 0 0 18px rgba(200,125,255,0.6), 0 0 3px rgba(0,0,0,0.8); }
+html[data-theme="shadow"] .j-glow-text { text-shadow: 0 0 10px rgba(200,125,255,0.6); }
+html[data-theme="shadow"] .j-page { box-shadow: 0 0 0 1px rgba(0,0,0,0.5) inset, 0 30px 80px -30px rgba(0,0,0,0.95), 0 0 60px -20px rgba(155,48,255,0.35); }
+html[data-theme="shadow"] .j-btn { background: linear-gradient(180deg, #2a0e3f, #12051d); border-color: rgba(200,125,255,0.5); color: var(--color-flame-2); }
+html[data-theme="shadow"] .j-btn:hover { box-shadow: 0 0 18px -2px var(--color-ember), inset 0 0 12px rgba(155,48,255,0.25); }
+html[data-theme="shadow"] .j-spine { background: linear-gradient(90deg, #08000e, #1c0a2a); border-right-color: rgba(200,125,255,0.6); box-shadow: 4px 0 18px -6px rgba(155,48,255,0.6); }
+html[data-theme="shadow"] .ember { display: none; }
+.ember-shadow {
+  bottom: auto; top: -10px;
+  background: radial-gradient(circle, #d9a3ff, #9b30ff 60%, transparent);
+  box-shadow: 0 0 8px rgba(200,125,255,0.7);
+  animation: shadow-drift linear infinite !important;
+}
+@keyframes shadow-drift {
+  0% { transform: translate(0, 0) scale(1); opacity: 0; }
+  10% { opacity: 1; }
+  100% { transform: translate(60px, 105vh) scale(0.4); opacity: 0; }
+}
+
+/* Nature Druid theme */
+html[data-theme="druid"] {
+  --color-coal: #070f05;
+  --color-page: #0e1a0a;
+  --color-page-2: #142612;
+  --color-ember: #4caf50;
+  --color-ember-2: #7bc97f;
+  --color-flame: #a5d6a7;
+  --color-flame-2: #c8e6c9;
+  --color-ink: #dcedc8;
+  --color-muted: #6b8a68;
+  --color-blood: #c94f3a;
+}
+html[data-theme="druid"] * { border-color: rgba(76,175,80,0.25); }
+html[data-theme="druid"] .j-h { text-shadow: 0 0 16px rgba(165,214,167,0.55), 0 0 2px rgba(0,0,0,0.7); }
+html[data-theme="druid"] .j-glow-text { text-shadow: 0 0 10px rgba(165,214,167,0.55); }
+html[data-theme="druid"] .j-page { box-shadow: 0 0 0 1px rgba(0,0,0,0.4) inset, 0 30px 80px -30px rgba(0,0,0,0.85), 0 0 50px -20px rgba(76,175,80,0.3); }
+html[data-theme="druid"] .j-btn { background: linear-gradient(180deg, #1a3218, #0a1608); border-color: rgba(165,214,167,0.5); color: var(--color-flame-2); }
+html[data-theme="druid"] .j-btn:hover { box-shadow: 0 0 18px -2px var(--color-ember), inset 0 0 12px rgba(76,175,80,0.25); }
+html[data-theme="druid"] .j-spine { background: linear-gradient(90deg, #061006, #142612); border-right-color: rgba(165,214,167,0.55); box-shadow: 4px 0 14px -6px rgba(76,175,80,0.5); }
+.ember-druid {
+  background: radial-gradient(circle, #dcedc8, #4caf50 60%, transparent);
+  box-shadow: 0 0 6px rgba(165,214,167,0.6);
+  border-radius: 50%;
+  animation-duration: 16s !important;
+}
+.ember-frost {
+  background: radial-gradient(circle, #ffffff, #a8ecff 60%, transparent);
+  box-shadow: 0 0 6px rgba(200,240,255,0.7);
+}
+
+/* Settings drawer slide-in */
+@keyframes j-drawer-in {
+  from { transform: translateX(30px); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+
 /* ============ Dice tray ============ */
 .dice-tray {
   background:

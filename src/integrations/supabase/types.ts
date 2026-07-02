@@ -137,6 +137,7 @@ export type Database = {
           class_level: string | null
           class_level_2: string | null
           created_at: string
+          custom_theme: Json | null
           features: Json | null
           hp_current: number | null
           hp_max: number | null
@@ -151,6 +152,7 @@ export type Database = {
           race: string | null
           speed: number | null
           subtitle: string | null
+          theme: string | null
           tools_prof: string | null
           user_id: string
           weapons_prof: string | null
@@ -166,6 +168,7 @@ export type Database = {
           class_level?: string | null
           class_level_2?: string | null
           created_at?: string
+          custom_theme?: Json | null
           features?: Json | null
           hp_current?: number | null
           hp_max?: number | null
@@ -180,6 +183,7 @@ export type Database = {
           race?: string | null
           speed?: number | null
           subtitle?: string | null
+          theme?: string | null
           tools_prof?: string | null
           user_id: string
           weapons_prof?: string | null
@@ -195,6 +199,7 @@ export type Database = {
           class_level?: string | null
           class_level_2?: string | null
           created_at?: string
+          custom_theme?: Json | null
           features?: Json | null
           hp_current?: number | null
           hp_max?: number | null
@@ -209,6 +214,7 @@ export type Database = {
           race?: string | null
           speed?: number | null
           subtitle?: string | null
+          theme?: string | null
           tools_prof?: string | null
           user_id?: string
           weapons_prof?: string | null
@@ -604,6 +610,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_custom_themes: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          theme: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          theme: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          theme?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       user_preferences: {
         Row: {
