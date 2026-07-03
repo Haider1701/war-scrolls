@@ -110,6 +110,7 @@ function compute(req: RollRequest): Displayed {
         { label: "d20", value: `[${d}] ${fmt(req.modifier)} = ${total}` },
         { label: "", value: String(total), big: true },
       ],
+      summary: `[${d}]${fmt(req.modifier)} = ${total}`,
     };
   }
   if (req.kind === "die") {
@@ -123,14 +124,20 @@ function compute(req: RollRequest): Displayed {
           { label: "rolls", value: `[${r.a}] · [${r.b}]` },
           { label: mode === "adv" ? "higher" : "lower", value: String(r.picked), big: true },
         ],
+        summary: `[${r.a}·${r.b}] → ${r.picked}`,
       };
     }
     const v = rollDie(req.sides);
-    return { id: Date.now(), title: `d${req.sides}`, lines: [{ label: "", value: String(v), big: true }] };
+    return {
+      id: Date.now(),
+      title: `d${req.sides}`,
+      lines: [{ label: "", value: String(v), big: true }],
+      summary: String(v),
+    };
   }
   if (req.kind === "formula") {
     const r = rollFormula(req.formula);
-    if (!r) return { id: Date.now(), title: "Invalid formula", lines: [{ label: "", value: req.formula }] };
+    if (!r) return { id: Date.now(), title: "Invalid formula", lines: [{ label: "", value: req.formula }], summary: "invalid" };
     return {
       id: Date.now(),
       title: req.label || r.formula,
@@ -138,6 +145,7 @@ function compute(req: RollRequest): Displayed {
         { label: r.formula, value: r.breakdown },
         { label: "", value: String(r.total), big: true },
       ],
+      summary: `${r.breakdown} = ${r.total}`,
     };
   }
   // attack
@@ -145,13 +153,11 @@ function compute(req: RollRequest): Displayed {
   const attackTotal = d20 + req.attackBonus;
   const crit = d20 === 20 ? "hit" : d20 === 1 ? "miss" : undefined;
   const dmg = rollFormula(req.damageFormula);
-  // Double dice on crit hit
   let dmgLine = "—";
   let dmgTotal = 0;
   if (dmg) {
     if (crit === "hit") {
-      const extra = rollFormula(req.damageFormula.replace(/^\s*(\d*)/, (m, c) => `${parseInt(c || "1") || 1}`));
-      // Actually double: roll dice count again same formula and add sum-of-dice only
+      const extra = rollFormula(req.damageFormula);
       const extraDice = extra ? extra.rolls.reduce((a, r) => a + r.value, 0) : 0;
       dmgTotal = dmg.total + extraDice;
       dmgLine = `${dmg.breakdown} + ${extraDice} (crit) = ${dmgTotal}`;
@@ -164,10 +170,12 @@ function compute(req: RollRequest): Displayed {
     id: Date.now(),
     title: req.label,
     lines: [
-      { label: "attack", value: `[${d20}] ${fmt(req.attackBonus)} = ${attackTotal}`, crit },
-      ...(crit === "hit" ? [{ label: "", value: "CRITICAL HIT! 💥", crit: "hit" as const }] : []),
-      ...(crit === "miss" ? [{ label: "", value: "Critical Miss! 💀", crit: "miss" as const }] : []),
+      { label: "attack", value: `[${d20}]${fmt(req.attackBonus)} = ${attackTotal}`, crit },
+      ...(crit === "hit" ? [{ label: "", value: "CRITICAL HIT! 💥", crit: "hit" as const, value_big: true } as any] : []),
+      ...(crit === "miss" ? [{ label: "", value: "Critical Miss! 💀", crit: "miss" as const } as any] : []),
       ...(dmg ? [{ label: "damage", value: dmgLine, big: true }] : []),
     ],
+    summary: `atk [${d20}]${fmt(req.attackBonus)}=${attackTotal}${dmg ? ` · dmg ${dmgTotal}` : ""}${crit === "hit" ? " CRIT" : ""}`,
   };
 }
+
