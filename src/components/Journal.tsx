@@ -13,6 +13,7 @@ import { NotesTab } from "./tabs/NotesTab";
 import { DiceTrayTab } from "./tabs/DiceTrayTab";
 import { SettingsPanel } from "./SettingsPanel";
 import { GmNotifications } from "./GmNotifications";
+import { CampaignBadge } from "./CampaignBadge";
 
 const TABS = [
   { id: "cover", label: "Cover" },
