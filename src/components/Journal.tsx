@@ -13,6 +13,7 @@ import { NotesTab } from "./tabs/NotesTab";
 import { DiceTrayTab } from "./tabs/DiceTrayTab";
 import { SettingsPanel } from "./SettingsPanel";
 import { GmNotifications } from "./GmNotifications";
+import { CampaignBadge } from "./CampaignBadge";
 
 const TABS = [
   { id: "cover", label: "Cover" },
@@ -175,6 +176,9 @@ export function Journal({
             {readOnly ? "Edit Mode" : "Preview Mode"}
           </button>
           <button className="j-btn j-btn-ghost" onClick={onSignOut}>Sign Out</button>
+          {character.character_type === "player" && (
+            <CampaignBadge userId={userId} characterId={character.id} />
+          )}
         </div>
         {settingsOpen && <SettingsPanel userId={userId} characters={characters} activeCharacterId={character.id} onClose={() => setSettingsOpen(false)} onSignOut={onSignOut} />}
         <div className="max-w-6xl mx-auto px-3 md:px-4 flex gap-1 overflow-x-auto scrollbar-thin">

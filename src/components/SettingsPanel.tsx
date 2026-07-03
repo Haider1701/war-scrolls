@@ -4,6 +4,7 @@ import type { Character } from "@/lib/types";
 import { THEMES, fontPair, useTheme, type ThemeId } from "./ThemeProvider";
 import type { CustomTheme } from "@/lib/themes";
 import { CustomThemeBuilder } from "./CustomThemeBuilder";
+import { CampaignsPanel } from "./CampaignsPanel";
 
 const db = supabase as any;
 
@@ -198,10 +199,8 @@ export function SettingsPanel({
 
           {/* CAMPAIGN */}
           <section>
-            <div className="text-[10px] uppercase tracking-widest text-[var(--color-muted)] mb-2">🏰 Campaign</div>
-            <div className="j-card text-sm text-[var(--color-muted)] italic">
-              Campaigns & DM sharing arrive in the next update.
-            </div>
+            <div className="text-[10px] uppercase tracking-widest text-[var(--color-muted)] mb-2">🏰 Campaigns</div>
+            <CampaignsPanel userId={userId} characters={characters} activeCharacterId={activeCharacterId} />
           </section>
 
           {/* EXPORT */}
