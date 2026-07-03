@@ -127,6 +127,32 @@ export type Traits = {
 
 export type FreeNotes = { id?: string; character_id: string; content: string };
 
+export type UserProfile = { user_id: string; display_name: string };
+
+export type Campaign = {
+  id: string;
+  dm_user_id: string;
+  name: string;
+  description: string | null;
+  join_code: string;
+  created_at?: string;
+};
+
+export type CampaignMember = {
+  id: string;
+  campaign_id: string;
+  player_user_id: string;
+  character_id: string | null;
+  joined_at?: string;
+};
+
+// Membership joined with campaign + DM profile, as fetched for the current player
+export type MembershipView = {
+  membership: CampaignMember;
+  campaign: Campaign;
+  dm_display_name: string;
+};
+
 export const abilityMod = (score: number) => Math.floor((score - 10) / 2);
 export const fmtMod = (n: number) => (n >= 0 ? `+${n}` : `${n}`);
 
