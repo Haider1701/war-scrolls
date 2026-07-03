@@ -8,18 +8,19 @@ export type RollRequest =
   | { kind: "die"; label: string; sides: number; mode?: "normal" | "adv" | "dis" }
   | { kind: "formula"; label: string; formula: string };
 
-type Displayed = {
+export type Displayed = {
   id: number;
   title: string;
   lines: { label: string; value: string; big?: boolean; crit?: "hit" | "miss" }[];
+  summary: string; // one-line summary for logs
 };
 
-const Ctx = createContext<(req: RollRequest) => void>(() => {});
+const Ctx = createContext<(req: RollRequest) => Displayed>(() => ({ id: 0, title: "", lines: [], summary: "" }));
 export const useDiceRoller = () => useContext(Ctx);
 
 export function DiceRollerProvider({ children }: { children: ReactNode }) {
   const [active, setActive] = useState<Displayed | null>(null);
-  const [spin, setSpin] = useState<number | null>(null); // spinning face value
+  const [spin, setSpin] = useState<number | null>(null);
   const timerRef = useRef<number | null>(null);
   const closeRef = useRef<number | null>(null);
 
@@ -29,9 +30,13 @@ export function DiceRollerProvider({ children }: { children: ReactNode }) {
     timerRef.current = null; closeRef.current = null;
   };
 
-  const roll = useCallback((req: RollRequest) => {
+  const roll = useCallback((req: RollRequest): Displayed => {
     clear();
-    // slot-machine spin phase
+    // Compute the ACTUAL result once — single source of truth
+    const displayed = compute(req);
+
+    // Visual spin phase (does not affect result)
+    setActive(null);
     setSpin(rollDie(20));
     const spinTimer = window.setInterval(() => setSpin(rollDie(20)), 45);
     timerRef.current = spinTimer;
@@ -39,12 +44,14 @@ export function DiceRollerProvider({ children }: { children: ReactNode }) {
     window.setTimeout(() => {
       window.clearInterval(spinTimer);
       timerRef.current = null;
-      const displayed = compute(req);
       setActive(displayed);
       setSpin(null);
       closeRef.current = window.setTimeout(() => setActive(null), 3600);
     }, 620);
+
+    return displayed;
   }, []);
+
 
   useEffect(() => () => clear(), []);
 
