@@ -90,6 +90,75 @@ export type Database = {
           },
         ]
       }
+      campaign_members: {
+        Row: {
+          campaign_id: string
+          character_id: string | null
+          id: string
+          joined_at: string
+          player_user_id: string
+        }
+        Insert: {
+          campaign_id: string
+          character_id?: string | null
+          id?: string
+          joined_at?: string
+          player_user_id: string
+        }
+        Update: {
+          campaign_id?: string
+          character_id?: string | null
+          id?: string
+          joined_at?: string
+          player_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_members_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaign_members_character_id_fkey"
+            columns: ["character_id"]
+            isOneToOne: false
+            referencedRelation: "characters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      campaigns: {
+        Row: {
+          created_at: string
+          description: string | null
+          dm_user_id: string
+          id: string
+          join_code: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          dm_user_id: string
+          id?: string
+          join_code: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          dm_user_id?: string
+          id?: string
+          join_code?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       character_images: {
         Row: {
           character_id: string
@@ -662,11 +731,33 @@ export type Database = {
         }
         Relationships: []
       }
+      user_profiles: {
+        Row: {
+          created_at: string
+          display_name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      is_campaign_dm: { Args: { _campaign_id: string }; Returns: boolean }
       is_character_owner: { Args: { _character_id: string }; Returns: boolean }
     }
     Enums: {
