@@ -171,8 +171,9 @@ function compute(req: RollRequest): Displayed {
     title: req.label,
     lines: [
       { label: "attack", value: `[${d20}]${fmt(req.attackBonus)} = ${attackTotal}`, crit },
-      ...(crit === "hit" ? [{ label: "", value: "CRITICAL HIT! 💥", crit: "hit" as const, value_big: true } as any] : []),
-      ...(crit === "miss" ? [{ label: "", value: "Critical Miss! 💀", crit: "miss" as const } as any] : []),
+      ...(crit === "hit" ? [{ label: "", value: "CRITICAL HIT! 💥", crit: "hit" as const }] : []),
+      ...(crit === "miss" ? [{ label: "", value: "Critical Miss! 💀", crit: "miss" as const }] : []),
+
       ...(dmg ? [{ label: "damage", value: dmgLine, big: true }] : []),
     ],
     summary: `atk [${d20}]${fmt(req.attackBonus)}=${attackTotal}${dmg ? ` · dmg ${dmgTotal}` : ""}${crit === "hit" ? " CRIT" : ""}`,
