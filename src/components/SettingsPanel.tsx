@@ -4,6 +4,7 @@ import type { Character } from "@/lib/types";
 import { THEMES, fontPair, useTheme, type ThemeId } from "./ThemeProvider";
 import type { CustomTheme } from "@/lib/themes";
 import { CustomThemeBuilder } from "./CustomThemeBuilder";
+import { CampaignsPanel } from "./CampaignsPanel";
 
 const db = supabase as any;
 
