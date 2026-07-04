@@ -14,6 +14,7 @@ import { DiceTrayTab } from "./tabs/DiceTrayTab";
 import { SettingsPanel } from "./SettingsPanel";
 import { GmNotifications } from "./GmNotifications";
 import { CampaignBadge } from "./CampaignBadge";
+import { DmDashboardButton } from "./DmDashboard";
 
 const TABS = [
   { id: "cover", label: "Cover" },
@@ -170,6 +171,7 @@ export function Journal({
           </div>
 
           <div className="flex-1" />
+          <DmDashboardButton userId={userId} />
           <GmNotifications userId={userId} />
           <button className="j-btn j-btn-ghost" title="Settings" onClick={() => setSettingsOpen(true)}>⚙️</button>
           <button className={`j-btn ${readOnly ? "" : "j-btn-ghost"}`} onClick={() => setReadOnly(!readOnly)}>

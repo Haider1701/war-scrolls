@@ -759,6 +759,7 @@ export type Database = {
     Functions: {
       is_campaign_dm: { Args: { _campaign_id: string }; Returns: boolean }
       is_character_owner: { Args: { _character_id: string }; Returns: boolean }
+      is_shared_with_dm: { Args: { _character_id: string }; Returns: boolean }
     }
     Enums: {
       [_ in never]: never
