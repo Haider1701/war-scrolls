@@ -30,6 +30,8 @@ export function CampaignsPanel({
   const [joinPreview, setJoinPreview] = useState<{ campaign: Campaign; dmName: string } | null>(null);
   const [joinError, setJoinError] = useState<string | null>(null);
   const [joining, setJoining] = useState(false);
+  const [sharePrompt, setSharePrompt] = useState<{ membershipId: string; campaignName: string; dmName: string } | null>(null);
+
 
   const playerCharacters = characters.filter((c) => c.character_type === "player");
 
@@ -107,18 +109,23 @@ export function CampaignsPanel({
     if (!joinPreview) return;
     setJoining(true);
     const characterId = playerCharacters.find((c) => c.id === activeCharacterId)?.id ?? playerCharacters[0]?.id ?? null;
-    const { error } = await db.from("campaign_members").insert({
+    const { data: inserted, error } = await db.from("campaign_members").insert({
       campaign_id: joinPreview.campaign.id,
       player_user_id: userId,
       character_id: characterId,
-    });
+      share_sheet_with_dm: false,
+    }).select("id").maybeSingle();
     setJoining(false);
     if (error) {
       setJoinError(String(error.message).includes("duplicate") ? "You already joined this campaign." : error.message);
       return;
     }
+    const preview = joinPreview;
     setJoinCode(""); setJoinPreview(null);
     await refresh();
+    if (inserted?.id) {
+      setSharePrompt({ membershipId: inserted.id, campaignName: preview.campaign.name, dmName: preview.dmName });
+    }
   }
 
   async function setMembershipCharacter(id: string, characterId: string | null) {
@@ -126,11 +133,23 @@ export function CampaignsPanel({
     await refresh();
   }
 
+  async function setShareSheet(id: string, value: boolean) {
+    await db.from("campaign_members").update({ share_sheet_with_dm: value }).eq("id", id);
+    await refresh();
+  }
+
+  async function resolveSharePrompt(share: boolean) {
+    if (!sharePrompt) return;
+    await setShareSheet(sharePrompt.membershipId, share);
+    setSharePrompt(null);
+  }
+
   async function leaveCampaign(id: string) {
     if (!confirm("Leave this campaign?")) return;
     await db.from("campaign_members").delete().eq("id", id);
     await refresh();
   }
+
 
   return (
     <div className="space-y-4">
@@ -201,7 +220,18 @@ export function CampaignsPanel({
                     </select>
                   </div>
                 )}
+                <label className="mt-2 flex items-center gap-2 text-[11px] cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={!!mv.membership.share_sheet_with_dm}
+                    onChange={(e) => setShareSheet(mv.membership.id, e.target.checked)}
+                  />
+                  <span className={mv.membership.share_sheet_with_dm ? "text-[var(--color-ember)]" : "text-[var(--color-muted)]"}>
+                    {mv.membership.share_sheet_with_dm ? "👁️ DM can view this character sheet" : "🔒 Sheet hidden from DM"}
+                  </span>
+                </label>
               </div>
+
             ))}
           </div>
         </div>
@@ -243,6 +273,26 @@ export function CampaignsPanel({
           </div>
         )}
       </div>
+
+      {sharePrompt && (
+        <div className="fixed inset-0 z-[110] bg-black/70 flex items-center justify-center p-4 j-fade" onClick={() => resolveSharePrompt(false)}>
+          <div className="j-page p-6 pl-10 max-w-md w-full relative" onClick={(e) => e.stopPropagation()}>
+            <div className="j-spine" />
+            <h3 className="j-h text-xl">Share your character sheet?</h3>
+            <p className="text-sm text-[var(--color-muted)] mt-2">
+              You've joined <b className="j-glow-text">{sharePrompt.campaignName}</b>. Would you like <b>{sharePrompt.dmName}</b> (your DM) to view your character sheet?
+            </p>
+            <p className="text-[11px] italic text-[var(--color-muted)] mt-2">
+              You can change this anytime from the campaign card.
+            </p>
+            <div className="flex gap-2 mt-4 justify-end">
+              <button className="j-btn j-btn-ghost" onClick={() => resolveSharePrompt(false)}>🔒 Keep Private</button>
+              <button className="j-btn" onClick={() => resolveSharePrompt(true)}>👁️ Share Sheet</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
+
 }

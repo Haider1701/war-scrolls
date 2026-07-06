@@ -97,6 +97,7 @@ export type Database = {
           id: string
           joined_at: string
           player_user_id: string
+          share_sheet_with_dm: boolean
         }
         Insert: {
           campaign_id: string
@@ -104,6 +105,7 @@ export type Database = {
           id?: string
           joined_at?: string
           player_user_id: string
+          share_sheet_with_dm?: boolean
         }
         Update: {
           campaign_id?: string
@@ -111,6 +113,7 @@ export type Database = {
           id?: string
           joined_at?: string
           player_user_id?: string
+          share_sheet_with_dm?: boolean
         }
         Relationships: [
           {

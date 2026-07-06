@@ -144,8 +144,10 @@ export type CampaignMember = {
   campaign_id: string;
   player_user_id: string;
   character_id: string | null;
+  share_sheet_with_dm?: boolean;
   joined_at?: string;
 };
+
 
 // Membership joined with campaign + DM profile, as fetched for the current player
 export type MembershipView = {
