@@ -443,6 +443,7 @@ export type Database = {
           id: string
           name: string | null
           role: string | null
+          session_id: string | null
         }
         Insert: {
           character_id: string
@@ -452,6 +453,7 @@ export type Database = {
           id?: string
           name?: string | null
           role?: string | null
+          session_id?: string | null
         }
         Update: {
           character_id?: string
@@ -461,6 +463,7 @@ export type Database = {
           id?: string
           name?: string | null
           role?: string | null
+          session_id?: string | null
         }
         Relationships: [
           {
@@ -468,6 +471,13 @@ export type Database = {
             columns: ["character_id"]
             isOneToOne: false
             referencedRelation: "characters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "npcs_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
             referencedColumns: ["id"]
           },
         ]
