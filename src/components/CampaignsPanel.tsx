@@ -30,6 +30,8 @@ export function CampaignsPanel({
   const [joinPreview, setJoinPreview] = useState<{ campaign: Campaign; dmName: string } | null>(null);
   const [joinError, setJoinError] = useState<string | null>(null);
   const [joining, setJoining] = useState(false);
+  const [sharePrompt, setSharePrompt] = useState<{ membershipId: string; campaignName: string; dmName: string } | null>(null);
+
 
   const playerCharacters = characters.filter((c) => c.character_type === "player");
 
