@@ -13,8 +13,10 @@ type Member = {
   player_user_id: string;
   player_name: string;
   character_id: string | null;
+  share_sheet_with_dm: boolean;
   character?: Character;
 };
+
 
 type CampaignWithMembers = { campaign: Campaign; members: Member[] };
 
