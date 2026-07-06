@@ -108,6 +108,7 @@ export type NPC = {
   name: string; role: string; description: string;
   disposition: Disposition;
   emoji_icon: string;
+  session_id?: string | null;
 };
 
 export type Equipment = {
