@@ -273,6 +273,26 @@ export function CampaignsPanel({
           </div>
         )}
       </div>
+
+      {sharePrompt && (
+        <div className="fixed inset-0 z-[110] bg-black/70 flex items-center justify-center p-4 j-fade" onClick={() => resolveSharePrompt(false)}>
+          <div className="j-page p-6 pl-10 max-w-md w-full relative" onClick={(e) => e.stopPropagation()}>
+            <div className="j-spine" />
+            <h3 className="j-h text-xl">Share your character sheet?</h3>
+            <p className="text-sm text-[var(--color-muted)] mt-2">
+              You've joined <b className="j-glow-text">{sharePrompt.campaignName}</b>. Would you like <b>{sharePrompt.dmName}</b> (your DM) to view your character sheet?
+            </p>
+            <p className="text-[11px] italic text-[var(--color-muted)] mt-2">
+              You can change this anytime from the campaign card.
+            </p>
+            <div className="flex gap-2 mt-4 justify-end">
+              <button className="j-btn j-btn-ghost" onClick={() => resolveSharePrompt(false)}>🔒 Keep Private</button>
+              <button className="j-btn" onClick={() => resolveSharePrompt(true)}>👁️ Share Sheet</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
+
 }
