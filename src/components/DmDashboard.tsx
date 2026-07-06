@@ -91,7 +91,7 @@ function DmDashboard({ userId, onClose }: { userId: string; onClose: () => void 
     if (campaigns.length === 0) { setRows([]); setLoading(false); return; }
     const campaignIds = campaigns.map((c) => c.id);
     const { data: mems } = await db.from("campaign_members").select("*").in("campaign_id", campaignIds);
-    const memList = (mems ?? []) as { id: string; campaign_id: string; player_user_id: string; character_id: string | null }[];
+    const memList = (mems ?? []) as { id: string; campaign_id: string; player_user_id: string; character_id: string | null; share_sheet_with_dm?: boolean }[];
     const playerIds = Array.from(new Set(memList.map((m) => m.player_user_id)));
     const characterIds = memList.map((m) => m.character_id).filter(Boolean) as string[];
     const [profRes, charRes] = await Promise.all([
@@ -107,9 +107,11 @@ function DmDashboard({ userId, onClose }: { userId: string; onClose: () => void 
         player_user_id: m.player_user_id,
         player_name: nameMap.get(m.player_user_id) ?? "Unknown Adventurer",
         character_id: m.character_id,
+        share_sheet_with_dm: !!m.share_sheet_with_dm,
         character: m.character_id ? charMap.get(m.character_id) : undefined,
       })),
     }));
+
     setRows(out);
     setLoading(false);
   }, [userId]);
