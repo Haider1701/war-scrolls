@@ -1,16 +1,21 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import type { Session } from "@/lib/types";
+import type { NPC, Session } from "@/lib/types";
 
 const db = supabase as any;
 
 export function SessionsTab({ characterId, readOnly }: { characterId: string; readOnly: boolean }) {
   const [sessions, setSessions] = useState<Session[]>([]);
+  const [npcs, setNpcs] = useState<NPC[]>([]);
 
   useEffect(() => {
     (async () => {
-      const { data } = await db.from("sessions").select("*").eq("character_id", characterId).order("session_number");
-      setSessions(data ?? []);
+      const [s, n] = await Promise.all([
+        db.from("sessions").select("*").eq("character_id", characterId).order("session_number"),
+        db.from("npcs").select("*").eq("character_id", characterId),
+      ]);
+      setSessions(s.data ?? []);
+      setNpcs(n.data ?? []);
     })();
   }, [characterId]);
 
@@ -70,6 +75,25 @@ export function SessionsTab({ characterId, readOnly }: { characterId: string; re
               <textarea className="j-textarea j-lined" rows={4} value={s.encounter_notes} onChange={(e) => update(s, { encounter_notes: e.target.value })} />
             )}
           </div>
+
+          {(() => {
+            const met = npcs.filter((n) => n.session_id === s.id);
+            if (met.length === 0) return null;
+            return (
+              <div className="mt-3 pt-3 border-t border-[var(--color-ember)]/20">
+                <div className="text-[10px] uppercase tracking-widest text-[var(--color-muted)] mb-2">👥 NPCs Met</div>
+                <div className="flex flex-wrap gap-2">
+                  {met.map((n) => (
+                    <div key={n.id} className="flex items-center gap-1.5 text-xs px-2 py-1 rounded bg-[var(--color-coal)] border border-[var(--color-ember)]/20">
+                      <span>{n.emoji_icon}</span>
+                      <span>{n.name}</span>
+                      <span className={`text-[9px] uppercase tracking-widest px-1.5 py-0.5 rounded disposition-${n.disposition}`}>{n.disposition}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
         </div>
       ))}
       {!readOnly && <button className="j-btn" onClick={addSession}>+ Add New Session</button>}
