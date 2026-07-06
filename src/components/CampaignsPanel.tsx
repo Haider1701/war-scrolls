@@ -109,18 +109,23 @@ export function CampaignsPanel({
     if (!joinPreview) return;
     setJoining(true);
     const characterId = playerCharacters.find((c) => c.id === activeCharacterId)?.id ?? playerCharacters[0]?.id ?? null;
-    const { error } = await db.from("campaign_members").insert({
+    const { data: inserted, error } = await db.from("campaign_members").insert({
       campaign_id: joinPreview.campaign.id,
       player_user_id: userId,
       character_id: characterId,
-    });
+      share_sheet_with_dm: false,
+    }).select("id").maybeSingle();
     setJoining(false);
     if (error) {
       setJoinError(String(error.message).includes("duplicate") ? "You already joined this campaign." : error.message);
       return;
     }
+    const preview = joinPreview;
     setJoinCode(""); setJoinPreview(null);
     await refresh();
+    if (inserted?.id) {
+      setSharePrompt({ membershipId: inserted.id, campaignName: preview.campaign.name, dmName: preview.dmName });
+    }
   }
 
   async function setMembershipCharacter(id: string, characterId: string | null) {
@@ -128,11 +133,23 @@ export function CampaignsPanel({
     await refresh();
   }
 
+  async function setShareSheet(id: string, value: boolean) {
+    await db.from("campaign_members").update({ share_sheet_with_dm: value }).eq("id", id);
+    await refresh();
+  }
+
+  async function resolveSharePrompt(share: boolean) {
+    if (!sharePrompt) return;
+    await setShareSheet(sharePrompt.membershipId, share);
+    setSharePrompt(null);
+  }
+
   async function leaveCampaign(id: string) {
     if (!confirm("Leave this campaign?")) return;
     await db.from("campaign_members").delete().eq("id", id);
     await refresh();
   }
+
 
   return (
     <div className="space-y-4">
