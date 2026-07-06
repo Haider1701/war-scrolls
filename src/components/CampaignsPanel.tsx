@@ -220,7 +220,18 @@ export function CampaignsPanel({
                     </select>
                   </div>
                 )}
+                <label className="mt-2 flex items-center gap-2 text-[11px] cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={!!mv.membership.share_sheet_with_dm}
+                    onChange={(e) => setShareSheet(mv.membership.id, e.target.checked)}
+                  />
+                  <span className={mv.membership.share_sheet_with_dm ? "text-[var(--color-ember)]" : "text-[var(--color-muted)]"}>
+                    {mv.membership.share_sheet_with_dm ? "👁️ DM can view this character sheet" : "🔒 Sheet hidden from DM"}
+                  </span>
+                </label>
               </div>
+
             ))}
           </div>
         </div>
