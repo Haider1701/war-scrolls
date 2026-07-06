@@ -1,16 +1,21 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import type { Session } from "@/lib/types";
+import type { NPC, Session } from "@/lib/types";
 
 const db = supabase as any;
 
 export function SessionsTab({ characterId, readOnly }: { characterId: string; readOnly: boolean }) {
   const [sessions, setSessions] = useState<Session[]>([]);
+  const [npcs, setNpcs] = useState<NPC[]>([]);
 
   useEffect(() => {
     (async () => {
-      const { data } = await db.from("sessions").select("*").eq("character_id", characterId).order("session_number");
-      setSessions(data ?? []);
+      const [s, n] = await Promise.all([
+        db.from("sessions").select("*").eq("character_id", characterId).order("session_number"),
+        db.from("npcs").select("*").eq("character_id", characterId),
+      ]);
+      setSessions(s.data ?? []);
+      setNpcs(n.data ?? []);
     })();
   }, [characterId]);
 
