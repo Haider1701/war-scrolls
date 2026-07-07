@@ -3,8 +3,15 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Character } from "@/lib/types";
 import { abilityMod, formatMulticlass, parseLevel, profBonusForLevel, totalLevel } from "@/lib/types";
 import { CharacterGallery } from "../CharacterGallery";
+import { DND_CLASSES, DND_RACES, DND_BACKGROUNDS, DND_ALIGNMENTS } from "@/lib/dnd-data";
 
 const db = supabase as any;
+
+const DATALISTS: Record<string, readonly string[]> = {
+  race: DND_RACES,
+  alignment: DND_ALIGNMENTS,
+  background: DND_BACKGROUNDS,
+};
 
 export function CoverTab({ character, onChange, readOnly }: {
   character: Character; onChange: (c: Character) => void; readOnly: boolean;
