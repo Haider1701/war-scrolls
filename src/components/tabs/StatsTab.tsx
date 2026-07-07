@@ -113,7 +113,23 @@ export function StatsTab({ character, onChange, readOnly }: {
     <div className="j-fade space-y-6">
       <div className="j-card flex flex-wrap items-center gap-6">
         <div>
-          <div className="text-[10px] uppercase tracking-widest text-[var(--color-muted)]">Hit Points</div>
+          <div className="text-[10px] uppercase tracking-widest text-[var(--color-muted)] flex items-center gap-2">
+            Hit Points
+            {!readOnly && abilities && (
+              <button
+                type="button"
+                className="text-[10px] px-1.5 py-0.5 rounded border border-[var(--color-ember)]/40 text-[var(--color-flame)] hover:bg-[var(--color-ember)]/10 transition"
+                title="Compute average HP from class levels + CON"
+                onClick={async () => {
+                  const hp = computeAverageHP(character.class_level, character.class_level_2, abilities.constitution);
+                  await setHP("hp_max", hp);
+                  await setHP("hp_current", hp);
+                }}
+              >
+                ✨ Auto
+              </button>
+            )}
+          </div>
           <div className="flex items-baseline gap-2">
             {readOnly ? <span className="j-hp text-5xl">{character.hp_current}</span> :
               <input type="number" className="j-num !text-5xl !w-20 j-hp" value={character.hp_current} onChange={(e) => setHP("hp_current", parseInt(e.target.value) || 0)} />}
