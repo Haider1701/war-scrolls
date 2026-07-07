@@ -219,11 +219,10 @@ function DmDashboard({ userId, onClose }: { userId: string; onClose: () => void 
         <div className="flex-1 flex min-h-0">
           {/* Sidebar: campaign list */}
           <aside
-            className="w-full md:w-72 lg:w-80 shrink-0 border-r overflow-y-auto"
+            className={`${selectedCampaignId ? "hidden md:block" : "block"} w-full md:w-72 lg:w-80 shrink-0 border-r overflow-y-auto`}
             style={{
               background: "rgba(8,6,4,0.6)",
               borderColor: "rgba(255,106,0,0.18)",
-              display: selectedCampaignId && window.innerWidth < 768 ? "none" : "block",
             }}
           >
             <div className="p-3">
