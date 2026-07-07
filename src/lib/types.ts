@@ -136,6 +136,7 @@ export type Campaign = {
   name: string;
   description: string | null;
   join_code: string;
+  session_notes?: string | null;
   created_at?: string;
 };
 
