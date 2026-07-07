@@ -113,15 +113,24 @@ export function CoverTab({ character, onChange, readOnly }: {
               <input
                 className="j-input"
                 placeholder="War Cleric 3"
+                list="dnd-classes"
                 value={character.class_level}
                 onChange={(e) => setField("class_level", e.target.value)}
               />
               <input
                 className="j-input"
                 placeholder="Second class (optional) — e.g. Fighter 2"
+                list="dnd-classes"
                 value={character.class_level_2 ?? ""}
                 onChange={(e) => setField("class_level_2", e.target.value as any)}
               />
+              <datalist id="dnd-classes">
+                {DND_CLASSES.flatMap((c) =>
+                  [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((l) => (
+                    <option key={`${c}-${l}`} value={`${c} ${l}`} />
+                  )),
+                )}
+              </datalist>
               <div className="text-[10px] text-[var(--color-muted)] italic">
                 Total level: <span className="text-[var(--color-flame)]">{lvl || 0}</span>
                 {" · "}Computed proficiency: <span className="text-[var(--color-flame)]">+{derivedProf}</span>
@@ -140,7 +149,17 @@ export function CoverTab({ character, onChange, readOnly }: {
                 {character[k] || <span className="text-[var(--color-muted)] italic">unset</span>}
               </div>
             ) : (
-              <input className="j-input" value={character[k]} onChange={(e) => setField(k, e.target.value)} />
+              <>
+                <input
+                  className="j-input"
+                  value={character[k]}
+                  list={`dnd-${k}`}
+                  onChange={(e) => setField(k, e.target.value)}
+                />
+                <datalist id={`dnd-${k}`}>
+                  {DATALISTS[k].map((v) => <option key={v} value={v} />)}
+                </datalist>
+              </>
             )}
           </div>
         ))}
