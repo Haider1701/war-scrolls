@@ -140,6 +140,7 @@ export type Database = {
           id: string
           join_code: string
           name: string
+          session_notes: string | null
           updated_at: string
         }
         Insert: {
@@ -149,6 +150,7 @@ export type Database = {
           id?: string
           join_code: string
           name: string
+          session_notes?: string | null
           updated_at?: string
         }
         Update: {
@@ -158,6 +160,7 @@ export type Database = {
           id?: string
           join_code?: string
           name?: string
+          session_notes?: string | null
           updated_at?: string
         }
         Relationships: []
