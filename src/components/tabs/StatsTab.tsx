@@ -4,6 +4,7 @@ import type { Abilities, Attack, Character, Skill } from "@/lib/types";
 import { SKILL_LIST, SAVE_LIST, abilityMod, fmtMod } from "@/lib/types";
 import { useDiceRoller } from "@/components/DiceRoller";
 import { parseModifier } from "@/lib/dice";
+import { computeAverageHP } from "@/lib/dnd-data";
 
 const db = supabase as any;
 
