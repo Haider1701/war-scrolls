@@ -5,6 +5,9 @@ import { THEMES, fontPair, useTheme, type ThemeId } from "./ThemeProvider";
 import type { CustomTheme } from "@/lib/themes";
 import { CustomThemeBuilder } from "./CustomThemeBuilder";
 import { CampaignsPanel } from "./CampaignsPanel";
+import { CampaignBadge } from "./CampaignBadge";
+import { GmNotifications } from "./GmNotifications";
+import { DmDashboardButton } from "./DmDashboard";
 
 const db = supabase as any;
 
@@ -16,12 +19,16 @@ export function SettingsPanel({
   activeCharacterId,
   onClose,
   onSignOut,
+  readOnly,
+  onToggleReadOnly,
 }: {
   userId: string;
   characters: Character[];
   activeCharacterId: string;
   onClose: () => void;
   onSignOut: () => void;
+  readOnly?: boolean;
+  onToggleReadOnly?: () => void;
 }) {
   const { theme, saveTheme } = useTheme();
   const [isGm, setIsGm] = useState(false);
@@ -107,7 +114,7 @@ export function SettingsPanel({
       >
         <div className="j-spine" />
         <div className="sticky top-0 z-10 flex items-center justify-between px-5 py-4 bg-[color-mix(in_oklab,var(--color-page)_92%,transparent)] backdrop-blur border-b border-[rgba(255,106,0,0.2)]">
-          <h2 className="j-h text-xl">⚙ Settings</h2>
+          <h2 className="j-h text-xl">Menu</h2>
           <button
             onClick={onClose}
             aria-label="Close settings"
@@ -116,9 +123,23 @@ export function SettingsPanel({
         </div>
 
         <div className="p-5 pl-8 space-y-8">
+          {/* NAVIGATION */}
+          <section className="space-y-2">
+            {activeChar && activeChar.character_type === "player" && (
+              <div className="mb-3"><CampaignBadge userId={userId} characterId={activeChar.id} /></div>
+            )}
+            {onToggleReadOnly && (
+              <button className="j-menu-item" aria-current={readOnly ? "true" : undefined} onClick={onToggleReadOnly}>
+                <span>{readOnly ? "Reading Mode — switch to Editing" : "Editing Mode — switch to Reading"}</span>
+              </button>
+            )}
+            <DmDashboardButton userId={userId} />
+            <GmNotifications userId={userId} />
+          </section>
+
           {/* JOURNAL THEME */}
           <section>
-            <div className="text-[10px] uppercase tracking-widest text-[var(--color-muted)] mb-2">🎨 Journal Theme (this character)</div>
+            <div className="text-[10px] uppercase tracking-widest text-[var(--color-muted)] mb-2">Journal Theme (this character)</div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {THEMES.map((t) => {
                 const pair = fontPair(t.fontPairId);
@@ -146,7 +167,7 @@ export function SettingsPanel({
               className={`j-btn w-full mt-3 ${theme === "custom" ? "" : "j-btn-ghost"}`}
               onClick={() => setShowBuilder((s) => !s)}
             >
-              🎨 {showBuilder ? "Hide" : "Create"} Custom Theme
+              {showBuilder ? "Hide" : "Create"} Custom Theme
             </button>
 
             {showBuilder && <CustomThemeBuilder userId={userId} onClose={() => setShowBuilder(false)} />}
@@ -181,7 +202,7 @@ export function SettingsPanel({
             {otherChars.length > 0 && (
               <div className="mt-4">
                 <button className="j-btn j-btn-ghost w-full" onClick={() => setCopyTargetOpen((o) => !o)}>
-                  📋 Copy Theme To…
+                  Copy Theme To…
                 </button>
                 {copyTargetOpen && (
                   <div className="j-card mt-2 space-y-1">
@@ -191,7 +212,7 @@ export function SettingsPanel({
                         onClick={() => copyThemeTo(c.id)}
                         className="w-full text-left px-2 py-1 rounded hover:bg-[rgba(255,106,0,0.1)]"
                       >
-                        <span className="text-xs">{c.character_type === "npc" ? "🎭" : "⚔️"}</span>{" "}
+                        <span className="text-[10px] uppercase tracking-widest text-[var(--color-muted)]">{c.character_type === "npc" ? "NPC" : "PC"}</span>{" "}
                         <span className="j-glow-text">{c.name || "Unnamed"}</span>
                         <span className="text-xs text-[var(--color-muted)]"> — {c.class_level || "—"}</span>
                       </button>
@@ -204,29 +225,29 @@ export function SettingsPanel({
 
           {/* ACCOUNT */}
           <section>
-            <div className="text-[10px] uppercase tracking-widest text-[var(--color-muted)] mb-2">👤 Account</div>
+            <div className="text-[10px] uppercase tracking-widest text-[var(--color-muted)] mb-2">Account</div>
             <div className="j-card flex items-center justify-between">
               <div>
-                <div className="j-glow-text" style={{ fontFamily: "var(--font-uncial)" }}>🎲 Game Master mode</div>
+                <div className="j-glow-text" style={{ fontFamily: "var(--font-uncial)" }}>Game Master mode</div>
                 <div className="text-xs text-[var(--color-muted)] italic">Receive homebrew spell approvals.</div>
               </div>
               <button onClick={toggleGm} className={`j-btn ${isGm ? "" : "j-btn-ghost"}`}>{isGm ? "On" : "Off"}</button>
             </div>
-            <button className="j-btn j-btn-ghost w-full mt-2" onClick={onSignOut}>Sign Out</button>
+            <button className="j-menu-item mt-2" onClick={onSignOut}><span>Sign Out</span></button>
           </section>
 
           {/* CAMPAIGN */}
           <section>
-            <div className="text-[10px] uppercase tracking-widest text-[var(--color-muted)] mb-2">🏰 Campaigns</div>
+            <div className="text-[10px] uppercase tracking-widest text-[var(--color-muted)] mb-2">Campaigns</div>
             <CampaignsPanel userId={userId} characters={characters} activeCharacterId={activeCharacterId} />
           </section>
 
           {/* EXPORT */}
           <section>
-            <div className="text-[10px] uppercase tracking-widest text-[var(--color-muted)] mb-2">📄 Export</div>
+            <div className="text-[10px] uppercase tracking-widest text-[var(--color-muted)] mb-2">Export</div>
             <div className="j-card">
               <button className="j-btn w-full" disabled={exporting || !activeChar} onClick={doExport}>
-                {exporting ? "🔥 Scribing…" : "📄 Export Character Sheet (PDF)"}
+                {exporting ? "Scribing…" : "Export Character Sheet (PDF)"}
               </button>
               {exportErr && <p className="text-xs text-[var(--color-blood)] mt-2">{exportErr}</p>}
               <p className="text-[11px] italic text-[var(--color-muted)] mt-2">

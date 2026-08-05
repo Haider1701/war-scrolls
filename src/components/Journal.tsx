@@ -12,9 +12,6 @@ import { NpcsGearTab } from "./tabs/NpcsGearTab";
 import { NotesTab } from "./tabs/NotesTab";
 import { DiceTrayTab } from "./tabs/DiceTrayTab";
 import { SettingsPanel } from "./SettingsPanel";
-import { GmNotifications } from "./GmNotifications";
-import { CampaignBadge } from "./CampaignBadge";
-import { DmDashboardButton } from "./DmDashboard";
 
 const TABS = [
   { id: "cover", label: "Cover" },
@@ -122,16 +119,16 @@ export function Journal({
     <div className="min-h-screen relative">
       <Embers />
       <header className="sticky top-0 z-30 backdrop-blur bg-[rgba(16,11,3,0.85)] border-b border-[rgba(255,106,0,0.2)]">
-        <div className="max-w-6xl mx-auto px-3 md:px-4 py-3 flex items-center gap-2 md:gap-3 flex-wrap">
-          <div className="j-h text-lg md:text-xl shrink-0">🔥 Ember Codex</div>
+        <div className="max-w-6xl mx-auto px-3 md:px-4 py-3 flex items-center gap-2 md:gap-3">
+          <div className="j-h text-lg md:text-xl shrink-0 j-glow-text">Ember Codex</div>
 
-          <div className="relative" ref={menuRef}>
+          <div className="relative min-w-0" ref={menuRef}>
             <button
-              className="j-btn j-btn-ghost flex items-center gap-2"
+              className="j-btn j-btn-ghost flex items-center gap-2 !rounded-full"
               onClick={() => setMenuOpen((o) => !o)}
               title="Switch character"
             >
-              <span className="j-glow-text truncate max-w-[160px]">{character.name || "Unnamed"}</span>
+              <span className="j-glow-text truncate max-w-[120px] md:max-w-[200px]">{character.name || "Unnamed"}</span>
               <span className="text-xs opacity-70">▾</span>
             </button>
             {menuOpen && (
@@ -140,10 +137,12 @@ export function Journal({
                   <button
                     key={c.id}
                     onClick={() => { setMenuOpen(false); if (c.id !== character.id) onSwitch(c.id); }}
-                    className={`w-full text-left px-3 py-2 rounded hover:bg-[rgba(255,106,0,0.1)] transition ${c.id === character.id ? "bg-[rgba(255,106,0,0.15)] border border-[rgba(255,106,0,0.35)]" : ""}`}
+                    className={`w-full text-left px-3 py-2 rounded-xl hover:bg-[rgba(255,106,0,0.1)] transition ${c.id === character.id ? "bg-[rgba(255,106,0,0.15)] border border-[rgba(255,106,0,0.35)]" : ""}`}
                   >
                     <div className="flex items-center gap-2">
-                      <span className="text-xs">{c.character_type === "npc" ? "🎭" : "⚔️"}</span>
+                      <span className="text-[10px] uppercase tracking-widest text-[var(--color-muted)] w-8 shrink-0">
+                        {c.character_type === "npc" ? "NPC" : "PC"}
+                      </span>
                       <div className="min-w-0 flex-1">
                         <div className="j-glow-text truncate">{c.name || "Unnamed"}</div>
                         <div className="text-xs text-[var(--color-muted)] truncate">{c.class_level || c.subtitle || "—"}</div>
@@ -156,33 +155,41 @@ export function Journal({
                   onClick={() => { setMenuOpen(false); onCreateNew(); }}
                   disabled={atLimit}
                   title={atLimit ? "Player character limit reached" : ""}
-                  className="w-full text-left px-3 py-2 rounded hover:bg-[rgba(255,106,0,0.1)] disabled:opacity-40 disabled:cursor-not-allowed transition"
+                  className="w-full text-left px-3 py-2 rounded-xl hover:bg-[rgba(255,106,0,0.1)] disabled:opacity-40 disabled:cursor-not-allowed transition"
                 >
-                  ＋ New Character
+                  New Character
                 </button>
                 <button
                   onClick={() => { setMenuOpen(false); onBackToSelect(); }}
-                  className="w-full text-left px-3 py-2 rounded hover:bg-[rgba(255,106,0,0.1)] transition"
+                  className="w-full text-left px-3 py-2 rounded-xl hover:bg-[rgba(255,106,0,0.1)] transition"
                 >
-                  ⌂ All Characters
+                  All Characters
                 </button>
               </div>
             )}
           </div>
 
           <div className="flex-1" />
-          <DmDashboardButton userId={userId} />
-          <GmNotifications userId={userId} />
-          <button className="j-btn j-btn-ghost" title="Settings" onClick={() => setSettingsOpen(true)}>⚙️</button>
-          <button className={`j-btn ${readOnly ? "" : "j-btn-ghost"}`} onClick={() => setReadOnly(!readOnly)}>
-            {readOnly ? "Edit Mode" : "Preview Mode"}
+          <button
+            className="j-burger shrink-0"
+            aria-label="Open menu"
+            aria-expanded={settingsOpen}
+            onClick={() => setSettingsOpen(true)}
+          >
+            <span /><span /><span />
           </button>
-          <button className="j-btn j-btn-ghost" onClick={onSignOut}>Sign Out</button>
-          {character.character_type === "player" && (
-            <CampaignBadge userId={userId} characterId={character.id} />
-          )}
         </div>
-        {settingsOpen && <SettingsPanel userId={userId} characters={characters} activeCharacterId={character.id} onClose={() => setSettingsOpen(false)} onSignOut={onSignOut} />}
+        {settingsOpen && (
+          <SettingsPanel
+            userId={userId}
+            characters={characters}
+            activeCharacterId={character.id}
+            onClose={() => setSettingsOpen(false)}
+            onSignOut={onSignOut}
+            readOnly={readOnly}
+            onToggleReadOnly={() => setReadOnly((r) => !r)}
+          />
+        )}
         <div className="max-w-6xl mx-auto px-3 md:px-4 flex gap-1 overflow-x-auto scrollbar-thin">
           {TABS.map((t) => (
             <button key={t.id} className={`j-tab ${tab === t.id ? "active" : ""}`} onClick={() => go(t.id)}>

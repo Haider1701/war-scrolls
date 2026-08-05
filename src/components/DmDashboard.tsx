@@ -68,14 +68,12 @@ export function DmDashboardButton({ userId }: { userId: string }) {
   return (
     <>
       <button
-        className="j-btn j-btn-ghost relative"
+        className="j-menu-item"
         onClick={() => setOpen(true)}
         title="DM Dashboard"
       >
-        🏰 DM
-        {pendingCount > 0 && (
-          <span className="absolute -top-1 -right-1 text-[10px] bg-[var(--color-blood)] text-white rounded-full min-w-[18px] h-[18px] px-1 flex items-center justify-center">{pendingCount}</span>
-        )}
+        <span>DM Dashboard</span>
+        {pendingCount > 0 && <span className="j-menu-count">{pendingCount}</span>}
       </button>
       {open && <DmDashboard userId={userId} onClose={() => setOpen(false)} />}
     </>

@@ -73,16 +73,14 @@ export function GmNotifications({ userId }: { userId: string }) {
 
   return (
     <div className="relative">
-      <button className="j-btn j-btn-ghost relative" onClick={() => setOpen((o) => !o)} title="GM notifications">
-        🔔
-        {unread > 0 && (
-          <span className="absolute -top-1 -right-1 text-[10px] bg-[var(--color-blood)] text-white rounded-full min-w-[18px] h-[18px] px-1 flex items-center justify-center">{unread}</span>
-        )}
+      <button className="j-menu-item" onClick={() => setOpen((o) => !o)} title="Homebrew requests">
+        <span>Homebrew Requests</span>
+        {unread > 0 && <span className="j-menu-count">{unread}</span>}
       </button>
       {open && (
-        <div className="absolute right-0 top-full mt-2 w-[360px] max-h-[500px] overflow-y-auto j-page p-3 z-40 shadow-xl">
+        <div className="mt-2 w-full max-h-[440px] overflow-y-auto j-page p-3 shadow-xl" style={{ borderRadius: 12 }}>
           <div className="pl-2">
-            <div className="j-h text-lg mb-2">GM Requests</div>
+            <div className="j-h text-lg mb-2">Homebrew Requests</div>
             {notifs.length === 0 && <div className="text-[var(--color-muted)] italic text-sm py-4 text-center">Nothing pending.</div>}
             {notifs.map((n) => {
               const sp = n.spell_id ? spells[n.spell_id] : undefined;
@@ -97,8 +95,8 @@ export function GmNotifications({ userId }: { userId: string }) {
                       <div className="text-xs mt-1 max-h-24 overflow-y-auto">{sp.description}</div>
                       {status === "pending" ? (
                         <div className="flex gap-2 mt-2">
-                          <button className="j-btn flex-1" onClick={() => approve(n)}>✅ Approve</button>
-                          <button className="j-btn j-btn-ghost flex-1" onClick={() => deny(n)}>❌ Deny</button>
+                          <button className="j-btn flex-1" onClick={() => approve(n)}>Approve</button>
+                          <button className="j-btn j-btn-ghost flex-1" onClick={() => deny(n)}>Deny</button>
                         </div>
                       ) : (
                         <div className={`text-xs italic mt-2 ${status === "approved" ? "text-[var(--color-ally)]" : "text-[var(--color-blood)]"}`}>
