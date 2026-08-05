@@ -582,3 +582,34 @@ html[data-theme="tome"] .dice-tray {
 .dice-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,0.6), 0 0 22px var(--color-ember); }
 .dice-btn:active { transform: translateY(0); }
 .dice-face { text-shadow: 0 0 10px var(--color-ember); }
+
+/* --- Drawer navigation rows (hamburger menu) --- */
+.j-menu-item {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  width: 100%; text-align: left;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid color-mix(in oklab, var(--color-ember) 22%, transparent);
+  background: color-mix(in oklab, var(--color-page2, var(--color-page)) 70%, transparent);
+  color: var(--color-ink);
+  font-family: var(--font-fell);
+  transition: background .18s ease, border-color .18s ease, transform .18s ease;
+}
+.j-menu-item:hover {
+  background: color-mix(in oklab, var(--color-ember) 12%, transparent);
+  border-color: color-mix(in oklab, var(--color-ember) 55%, transparent);
+  transform: translateX(2px);
+}
+.j-menu-item[aria-current="true"] {
+  border-color: var(--color-ember);
+  background: color-mix(in oklab, var(--color-ember) 16%, transparent);
+}
+.j-menu-count {
+  min-width: 20px; height: 20px; padding: 0 6px; border-radius: 999px;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 11px; background: var(--color-blood); color: #fff;
+}
+.j-burger { display: inline-flex; flex-direction: column; gap: 4px; padding: 10px 12px; border-radius: 12px;
+  border: 1px solid color-mix(in oklab, var(--color-ember) 35%, transparent); background: transparent; transition: background .18s ease, border-color .18s ease; }
+.j-burger:hover { background: color-mix(in oklab, var(--color-ember) 12%, transparent); border-color: var(--color-ember); }
+.j-burger span { display: block; width: 18px; height: 2px; border-radius: 2px; background: var(--color-flame); }
