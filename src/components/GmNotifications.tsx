@@ -73,11 +73,9 @@ export function GmNotifications({ userId }: { userId: string }) {
 
   return (
     <div className="relative">
-      <button className="j-btn j-btn-ghost relative" onClick={() => setOpen((o) => !o)} title="GM notifications">
-        🔔
-        {unread > 0 && (
-          <span className="absolute -top-1 -right-1 text-[10px] bg-[var(--color-blood)] text-white rounded-full min-w-[18px] h-[18px] px-1 flex items-center justify-center">{unread}</span>
-        )}
+      <button className="j-menu-item" onClick={() => setOpen((o) => !o)} title="Homebrew requests">
+        <span>Homebrew Requests</span>
+        {unread > 0 && <span className="j-menu-count">{unread}</span>}
       </button>
       {open && (
         <div className="absolute right-0 top-full mt-2 w-[360px] max-h-[500px] overflow-y-auto j-page p-3 z-40 shadow-xl">
