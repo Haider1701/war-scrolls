@@ -12,9 +12,6 @@ import { NpcsGearTab } from "./tabs/NpcsGearTab";
 import { NotesTab } from "./tabs/NotesTab";
 import { DiceTrayTab } from "./tabs/DiceTrayTab";
 import { SettingsPanel } from "./SettingsPanel";
-import { GmNotifications } from "./GmNotifications";
-import { CampaignBadge } from "./CampaignBadge";
-import { DmDashboardButton } from "./DmDashboard";
 
 const TABS = [
   { id: "cover", label: "Cover" },
