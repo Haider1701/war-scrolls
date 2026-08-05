@@ -28,6 +28,24 @@ export function SettingsPanel({
   const [showBuilder, setShowBuilder] = useState(false);
   const [library, setLibrary] = useState<LibraryTheme[]>([]);
   const [copyTargetOpen, setCopyTargetOpen] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [exportErr, setExportErr] = useState<string | null>(null);
+
+  const activeChar = characters.find((c) => c.id === activeCharacterId) ?? null;
+
+  async function doExport() {
+    if (!activeChar) return;
+    setExporting(true);
+    setExportErr(null);
+    try {
+      const { exportCharacterPdf } = await import("@/lib/pdf/exportCharacterPdf");
+      await exportCharacterPdf(activeChar);
+    } catch (e: any) {
+      setExportErr(e?.message ?? "Could not create the PDF.");
+    } finally {
+      setExporting(false);
+    }
+  }
 
   useEffect(() => {
     (async () => {
