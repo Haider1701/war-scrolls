@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Character } from "@/lib/types";
 import { THEMES, fontPair, useTheme, type ThemeId } from "./ThemeProvider";
@@ -96,46 +96,121 @@ export function SettingsPanel({
 
   const otherChars = characters.filter((c) => c.id !== activeCharacterId);
 
+  const drawerRef = useRef<HTMLElement | null>(null);
+  const [closing, setClosing] = useState(false);
+  const closeTimer = useRef<number | null>(null);
+
+  const requestClose = useCallback(() => {
+    if (closing) return;
+    const reduced = typeof window !== "undefined"
+      && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    setClosing(true);
+    closeTimer.current = window.setTimeout(onClose, reduced ? 0 : 240);
+  }, [closing, onClose]);
+
+  useEffect(() => () => { if (closeTimer.current) window.clearTimeout(closeTimer.current); }, []);
+
+  function focusables(): HTMLElement[] {
+    const root = drawerRef.current;
+    if (!root) return [];
+    return Array.from(
+      root.querySelectorAll<HTMLElement>(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      )
+    ).filter((el) => !el.hasAttribute("disabled") && el.offsetParent !== null);
+  }
+
+  // Initial focus inside the drawer
+  useEffect(() => {
+    const first = focusables()[0];
+    first?.focus();
+  }, []);
+
+  // Escape to close, Tab focus trap, arrow-key navigation across menu rows
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      const root = drawerRef.current;
+      if (!root) return;
+      if (e.key === "Escape") { e.stopPropagation(); requestClose(); return; }
+
+      if (e.key === "Tab") {
+        const items = focusables();
+        if (items.length === 0) return;
+        const first = items[0];
+        const last = items[items.length - 1];
+        const active = document.activeElement as HTMLElement | null;
+        if (!active || !root.contains(active)) { e.preventDefault(); first.focus(); return; }
+        if (e.shiftKey && active === first) { e.preventDefault(); last.focus(); }
+        else if (!e.shiftKey && active === last) { e.preventDefault(); first.focus(); }
+        return;
+      }
+
+      if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+        const rows = Array.from(root.querySelectorAll<HTMLElement>(".j-menu-item"));
+        if (rows.length === 0) return;
+        const i = rows.indexOf(document.activeElement as HTMLElement);
+        if (i === -1) return;
+        e.preventDefault();
+        const next = e.key === "ArrowDown"
+          ? rows[(i + 1) % rows.length]
+          : rows[(i - 1 + rows.length) % rows.length];
+        next.focus();
+      }
+    }
+    document.addEventListener("keydown", onKey, true);
+    return () => document.removeEventListener("keydown", onKey, true);
+  }, [requestClose]);
+
+  const state = closing ? "closed" : "open";
+
   return (
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 z-[80] bg-black/60 j-fade"
-        onClick={onClose}
-        aria-label="Close settings backdrop"
+        className="fixed inset-0 z-[80] bg-black/60 j-backdrop"
+        data-state={state}
+        onClick={requestClose}
+        aria-hidden="true"
       />
 
       {/* Drawer */}
       <aside
-        className="fixed right-0 top-0 bottom-0 z-[90] w-full md:w-[420px] j-page shadow-2xl overflow-y-auto"
-        style={{ borderRadius: 0, animation: "j-drawer-in 0.28s ease-out" }}
+        ref={drawerRef as any}
+        id="journal-menu-drawer"
+        className="fixed right-0 top-0 bottom-0 z-[90] w-full md:w-[420px] j-page j-drawer shadow-2xl overflow-y-auto"
+        data-state={state}
+        style={{ borderRadius: 0 }}
         role="dialog"
         aria-modal="true"
+        aria-label="Journal menu"
       >
         <div className="j-spine" />
         <div className="sticky top-0 z-10 flex items-center justify-between px-5 py-4 bg-[color-mix(in_oklab,var(--color-page)_92%,transparent)] backdrop-blur border-b border-[rgba(255,106,0,0.2)]">
           <h2 className="j-h text-xl">Menu</h2>
           <button
-            onClick={onClose}
-            aria-label="Close settings"
+            onClick={requestClose}
+            aria-label="Close menu"
             className="j-btn j-btn-ghost !py-1 !px-3 text-xl"
           >✕</button>
         </div>
 
         <div className="p-5 pl-8 space-y-8">
           {/* NAVIGATION */}
-          <section className="space-y-2">
+          <section>
             {activeChar && activeChar.character_type === "player" && (
               <div className="mb-3"><CampaignBadge userId={userId} characterId={activeChar.id} /></div>
             )}
-            {onToggleReadOnly && (
-              <button className="j-menu-item" aria-current={readOnly ? "true" : undefined} onClick={onToggleReadOnly}>
-                <span>{readOnly ? "Reading Mode — switch to Editing" : "Editing Mode — switch to Reading"}</span>
-              </button>
-            )}
-            <DmDashboardButton userId={userId} />
-            <GmNotifications userId={userId} />
+            <nav className="j-nav-group" aria-label="Journal navigation">
+              {onToggleReadOnly && (
+                <button className="j-menu-item" aria-current={readOnly ? "true" : undefined} onClick={onToggleReadOnly}>
+                  <span>{readOnly ? "Reading Mode — switch to Editing" : "Editing Mode — switch to Reading"}</span>
+                </button>
+              )}
+              <DmDashboardButton userId={userId} />
+              <GmNotifications userId={userId} />
+            </nav>
           </section>
+
 
           {/* JOURNAL THEME */}
           <section>

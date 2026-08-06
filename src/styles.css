@@ -613,3 +613,63 @@ html[data-theme="tome"] .dice-tray {
   border: 1px solid color-mix(in oklab, var(--color-ember) 35%, transparent); background: transparent; transition: background .18s ease, border-color .18s ease; }
 .j-burger:hover { background: color-mix(in oklab, var(--color-ember) 12%, transparent); border-color: var(--color-ember); }
 .j-burger span { display: block; width: 18px; height: 2px; border-radius: 2px; background: var(--color-flame); }
+
+/* ============ Hamburger drawer: motion, spacing, focus ============ */
+@keyframes j-drawer-out {
+  from { transform: translateX(0);     opacity: 1; }
+  to   { transform: translateX(100%);  opacity: 0; }
+}
+@keyframes j-backdrop-in  { from { opacity: 0; } to { opacity: 1; } }
+@keyframes j-backdrop-out { from { opacity: 1; } to { opacity: 0; } }
+
+.j-drawer {
+  animation: j-drawer-in 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+  will-change: transform, opacity;
+}
+.j-drawer[data-state="closed"] {
+  animation: j-drawer-out 0.24s cubic-bezier(0.4, 0, 1, 1) both;
+}
+.j-backdrop { animation: j-backdrop-in 0.28s ease-out both; }
+.j-backdrop[data-state="closed"] { animation: j-backdrop-out 0.2s ease-in both; }
+
+/* Navigation row groups: consistent spacing + dividers */
+.j-nav-group { display: flex; flex-direction: column; }
+.j-nav-group > * + * {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid color-mix(in oklab, var(--color-ember) 14%, transparent);
+}
+.j-nav-group .j-menu-item { margin: 0; }
+
+/* Keyboard focus + active page highlight */
+.j-menu-item:focus-visible,
+.j-burger:focus-visible {
+  outline: none;
+  border-color: var(--color-ember);
+  box-shadow: 0 0 0 2px color-mix(in oklab, var(--color-ember) 65%, transparent);
+}
+.j-menu-item[aria-current="true"],
+.j-menu-item[aria-current="page"] {
+  position: relative;
+  border-color: var(--color-ember);
+  background: color-mix(in oklab, var(--color-ember) 16%, transparent);
+  box-shadow: inset 0 0 18px color-mix(in oklab, var(--color-ember) 12%, transparent);
+}
+.j-menu-item[aria-current="true"]::before,
+.j-menu-item[aria-current="page"]::before {
+  content: "";
+  position: absolute; left: 4px; top: 20%; bottom: 20%;
+  width: 3px; border-radius: 3px; background: var(--color-flame);
+  box-shadow: 0 0 8px var(--color-ember);
+}
+.j-burger[aria-expanded="true"] {
+  background: color-mix(in oklab, var(--color-ember) 14%, transparent);
+  border-color: var(--color-ember);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .j-drawer, .j-drawer[data-state="closed"],
+  .j-backdrop, .j-backdrop[data-state="closed"] { animation-duration: 0.01ms !important; }
+  .j-menu-item, .j-burger { transition: none !important; }
+  .j-menu-item:hover { transform: none !important; }
+}
