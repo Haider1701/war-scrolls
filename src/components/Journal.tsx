@@ -12,6 +12,7 @@ import { NpcsGearTab } from "./tabs/NpcsGearTab";
 import { NotesTab } from "./tabs/NotesTab";
 import { DiceTrayTab } from "./tabs/DiceTrayTab";
 import { SettingsPanel } from "./SettingsPanel";
+import { Codex } from "./codex/Codex";
 
 const TABS = [
   { id: "cover", label: "Cover" },
@@ -44,6 +45,7 @@ export function Journal({
   const [readOnly, setReadOnly] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [codexOpen, setCodexOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const burgerRef = useRef<HTMLButtonElement>(null);
 
@@ -116,6 +118,10 @@ export function Journal({
 
   const tabIdx = TABS.findIndex((t) => t.id === tab);
 
+  if (codexOpen) {
+    return <Codex character={character} onClose={() => setCodexOpen(false)} />;
+  }
+
   return (
     <div className="min-h-screen relative">
       <Embers />
@@ -171,6 +177,7 @@ export function Journal({
           </div>
 
           <div className="flex-1" />
+          <button className="j-btn shrink-0 mr-1" onClick={() => setCodexOpen(true)}>Codex</button>
           <button
             ref={burgerRef}
             className="j-burger shrink-0"
