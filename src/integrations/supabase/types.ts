@@ -205,26 +205,42 @@ export type Database = {
           affliction_note: string | null
           alignment: string | null
           armor_class: number | null
+          armor_notes: string
           armor_prof: string | null
           background: string | null
+          backpack: string
           backstory: string | null
+          campaign_name: string
+          character_quote: string
           character_type: string
           class_level: string | null
           class_level_2: string | null
+          combat_notes: string
+          consumables: string
           created_at: string
           custom_theme: Json | null
+          death_save_failures: number
+          death_save_successes: number
+          feats: string
           features: Json | null
+          goals: string
+          hit_dice: string
           hp_current: number | null
           hp_max: number | null
           id: string
           image_url: string | null
+          important_notes: string
+          initiative: number
           languages: string | null
+          magic_items: string
           name: string
           npc_actions: string | null
           npc_quotes: string | null
           passive_perception: number | null
+          player_name: string
           proficiency_bonus: number | null
           race: string | null
+          racial_traits: string
           speed: number | null
           subtitle: string | null
           theme: string | null
@@ -236,26 +252,42 @@ export type Database = {
           affliction_note?: string | null
           alignment?: string | null
           armor_class?: number | null
+          armor_notes?: string
           armor_prof?: string | null
           background?: string | null
+          backpack?: string
           backstory?: string | null
+          campaign_name?: string
+          character_quote?: string
           character_type?: string
           class_level?: string | null
           class_level_2?: string | null
+          combat_notes?: string
+          consumables?: string
           created_at?: string
           custom_theme?: Json | null
+          death_save_failures?: number
+          death_save_successes?: number
+          feats?: string
           features?: Json | null
+          goals?: string
+          hit_dice?: string
           hp_current?: number | null
           hp_max?: number | null
           id?: string
           image_url?: string | null
+          important_notes?: string
+          initiative?: number
           languages?: string | null
+          magic_items?: string
           name?: string
           npc_actions?: string | null
           npc_quotes?: string | null
           passive_perception?: number | null
+          player_name?: string
           proficiency_bonus?: number | null
           race?: string | null
+          racial_traits?: string
           speed?: number | null
           subtitle?: string | null
           theme?: string | null
@@ -267,26 +299,42 @@ export type Database = {
           affliction_note?: string | null
           alignment?: string | null
           armor_class?: number | null
+          armor_notes?: string
           armor_prof?: string | null
           background?: string | null
+          backpack?: string
           backstory?: string | null
+          campaign_name?: string
+          character_quote?: string
           character_type?: string
           class_level?: string | null
           class_level_2?: string | null
+          combat_notes?: string
+          consumables?: string
           created_at?: string
           custom_theme?: Json | null
+          death_save_failures?: number
+          death_save_successes?: number
+          feats?: string
           features?: Json | null
+          goals?: string
+          hit_dice?: string
           hp_current?: number | null
           hp_max?: number | null
           id?: string
           image_url?: string | null
+          important_notes?: string
+          initiative?: number
           languages?: string | null
+          magic_items?: string
           name?: string
           npc_actions?: string | null
           npc_quotes?: string | null
           passive_perception?: number | null
+          player_name?: string
           proficiency_bonus?: number | null
           race?: string | null
+          racial_traits?: string
           speed?: number | null
           subtitle?: string | null
           theme?: string | null
