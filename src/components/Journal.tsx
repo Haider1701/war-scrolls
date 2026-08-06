@@ -45,6 +45,7 @@ export function Journal({
   const [menuOpen, setMenuOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const burgerRef = useRef<HTMLButtonElement>(null);
 
 
 
@@ -171,10 +172,13 @@ export function Journal({
 
           <div className="flex-1" />
           <button
+            ref={burgerRef}
             className="j-burger shrink-0"
-            aria-label="Open menu"
+            aria-label={settingsOpen ? "Close menu" : "Open menu"}
+            aria-haspopup="dialog"
             aria-expanded={settingsOpen}
-            onClick={() => setSettingsOpen(true)}
+            aria-controls="journal-menu-drawer"
+            onClick={() => setSettingsOpen((o) => !o)}
           >
             <span /><span /><span />
           </button>
@@ -184,7 +188,7 @@ export function Journal({
             userId={userId}
             characters={characters}
             activeCharacterId={character.id}
-            onClose={() => setSettingsOpen(false)}
+            onClose={() => { setSettingsOpen(false); burgerRef.current?.focus(); }}
             onSignOut={onSignOut}
             readOnly={readOnly}
             onToggleReadOnly={() => setReadOnly((r) => !r)}

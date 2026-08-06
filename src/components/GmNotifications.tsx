@@ -73,7 +73,7 @@ export function GmNotifications({ userId }: { userId: string }) {
 
   return (
     <div className="relative">
-      <button className="j-menu-item" onClick={() => setOpen((o) => !o)} title="Homebrew requests">
+      <button className="j-menu-item" onClick={() => setOpen((o) => !o)} aria-current={open ? "true" : undefined} aria-expanded={open} title="Homebrew requests">
         <span>Homebrew Requests</span>
         {unread > 0 && <span className="j-menu-count">{unread}</span>}
       </button>

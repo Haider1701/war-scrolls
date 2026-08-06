@@ -70,6 +70,9 @@ export function DmDashboardButton({ userId }: { userId: string }) {
       <button
         className="j-menu-item"
         onClick={() => setOpen(true)}
+        aria-current={open ? "true" : undefined}
+        aria-haspopup="dialog"
+        aria-expanded={open}
         title="DM Dashboard"
       >
         <span>DM Dashboard</span>
