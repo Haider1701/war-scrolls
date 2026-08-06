@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactElement } from "react";
 import type { Character } from "@/lib/types";
 import { loadCodexData, type CodexData } from "@/lib/codexData";
 import { exportCharacterPdf } from "@/lib/pdf/exportCharacterPdf";
@@ -8,7 +8,7 @@ import {
   OverviewPage, PortraitPage, SpellbookPage, StoryPage,
 } from "./pages";
 
-const CHAPTERS: { id: string; label: string; render: (d: CodexData) => JSX.Element }[] = [
+const CHAPTERS: { id: string; label: string; render: (d: CodexData) => ReactElement }[] = [
   { id: "cover", label: "Title Page", render: (d) => <CoverPage d={d} /> },
   { id: "portrait", label: "Portrait", render: (d) => <PortraitPage d={d} /> },
   { id: "overview", label: "Overview", render: (d) => <OverviewPage d={d} /> },
