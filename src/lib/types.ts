@@ -31,6 +31,23 @@ export type Character = {
   npc_actions: string;
   theme?: ThemeId | null;
   custom_theme?: CustomTheme | null;
+  // Codex book fields
+  player_name?: string;
+  campaign_name?: string;
+  character_quote?: string;
+  initiative?: number;
+  hit_dice?: string;
+  death_save_successes?: number;
+  death_save_failures?: number;
+  combat_notes?: string;
+  armor_notes?: string;
+  racial_traits?: string;
+  feats?: string;
+  goals?: string;
+  magic_items?: string;
+  consumables?: string;
+  backpack?: string;
+  important_notes?: string;
 };
 
 export type CharacterImage = {
