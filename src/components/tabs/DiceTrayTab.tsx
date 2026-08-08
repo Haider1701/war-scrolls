@@ -31,8 +31,7 @@ export function DiceTrayTab() {
     const action = () => {
       const m = currentMod();
       const displayed = openRoll({ kind: "die", label: `d${sides}`, sides, modifier: m });
-      const tag = advMode === "adv" ? "[ADV] " : advMode === "dis" ? "[DIS] " : "";
-      push(`${tag}d${sides}${m !== 0 ? ` ${m > 0 ? "+" : ""}${m}` : ""}`, displayed.summary);
+      push(`d${sides}${m !== 0 ? ` ${m > 0 ? "+" : ""}${m}` : ""}`, displayed.summary);
     };
     setLast(() => action);
     action();
@@ -100,7 +99,7 @@ export function DiceTrayTab() {
           </button>
         </div>
         <p className="text-[10px] italic text-[var(--color-muted)] mt-2">
-          Mix dice freely: <code>2d6+1d4+3</code>. Adv/Dis applies to any d20 roll (including checks).
+          Mix dice freely: <code>2d6+1d4+3</code>. Adv/Dis applies to <em>every</em> die, formula token, skill check and attack.
         </p>
       </div>
 
