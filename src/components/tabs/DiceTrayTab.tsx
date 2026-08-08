@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useDiceRoller } from "@/components/DiceRoller";
+import { useDiceRoller, useRollMode } from "@/components/DiceRoller";
 
 type LogEntry = { id: number; label: string; result: string; at: string };
 const DICE = [4, 6, 8, 10, 12, 20, 100];
@@ -8,7 +8,7 @@ export function DiceTrayTab() {
   const openRoll = useDiceRoller();
   const [formula, setFormula] = useState("2d6+3");
   const [modifier, setModifier] = useState("0");
-  const [advMode, setAdvMode] = useState<"normal" | "adv" | "dis">("normal");
+  const { mode: advMode, setMode: setAdvMode } = useRollMode();
   const [log, setLog] = useState<LogEntry[]>([]);
   const [last, setLast] = useState<null | (() => void)>(null);
 
@@ -29,17 +29,9 @@ export function DiceTrayTab() {
 
   function rollSingle(sides: number) {
     const action = () => {
-      const label = sides === 20 && advMode !== "normal" ? `d20 ${advMode}` : `d${sides}`;
-      let displayed;
-      if (sides === 20 && advMode !== "normal") {
-        displayed = openRoll({ kind: "die", label, sides: 20, mode: advMode });
-      } else if (currentMod() !== 0) {
-        const f = withMod(`1d${sides}`);
-        displayed = openRoll({ kind: "formula", label: f, formula: f });
-      } else {
-        displayed = openRoll({ kind: "die", label, sides });
-      }
-      push(label + (currentMod() !== 0 && !(sides === 20 && advMode !== "normal") ? ` ${currentMod() > 0 ? "+" : ""}${currentMod()}` : ""), displayed.summary);
+      const m = currentMod();
+      const displayed = openRoll({ kind: "die", label: `d${sides}`, sides, modifier: m });
+      push(`d${sides}${m !== 0 ? ` ${m > 0 ? "+" : ""}${m}` : ""}`, displayed.summary);
     };
     setLast(() => action);
     action();
@@ -107,7 +99,7 @@ export function DiceTrayTab() {
           </button>
         </div>
         <p className="text-[10px] italic text-[var(--color-muted)] mt-2">
-          Mix dice freely: <code>2d6+1d4+3</code>. Adv/Dis applies to any d20 roll (including checks).
+          Mix dice freely: <code>2d6+1d4+3</code>. Adv/Dis applies to <em>every</em> die, formula token, skill check and attack.
         </p>
       </div>
 

@@ -1,26 +1,44 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { rollDie, rollFormula, rollD20 } from "@/lib/dice";
+import { rollDie, rollFormula, rollWithMode, type RollMode } from "@/lib/dice";
 
 export type RollRequest =
   | { kind: "skill"; label: string; modifier: number }
   | { kind: "save"; label: string; modifier: number }
   | { kind: "attack"; label: string; attackBonus: number; damageFormula: string }
-  | { kind: "die"; label: string; sides: number; mode?: "normal" | "adv" | "dis" }
+  | { kind: "die"; label: string; sides: number; modifier?: number }
   | { kind: "formula"; label: string; formula: string };
 
 export type Displayed = {
   id: number;
   title: string;
-  lines: { label: string; value: string; big?: boolean; crit?: "hit" | "miss" }[];
+  lines: {
+    label: string;
+    value: string;
+    big?: boolean;
+    crit?: "hit" | "miss";
+    pair?: { picked: number; dropped: number; mode: "adv" | "dis" };
+  }[];
   summary: string; // one-line summary for logs
 };
 
-const Ctx = createContext<(req: RollRequest) => Displayed>(() => ({ id: 0, title: "", lines: [], summary: "" }));
-export const useDiceRoller = () => useContext(Ctx);
+type Api = { roll: (req: RollRequest) => Displayed; mode: RollMode; setMode: (m: RollMode) => void };
+const Ctx = createContext<Api>({
+  roll: () => ({ id: 0, title: "", lines: [], summary: "" }),
+  mode: "normal",
+  setMode: () => {},
+});
+export const useDiceRoller = () => useContext(Ctx).roll;
+export const useRollMode = () => {
+  const { mode, setMode } = useContext(Ctx);
+  return { mode, setMode };
+};
 
 export function DiceRollerProvider({ children }: { children: ReactNode }) {
   const [active, setActive] = useState<Displayed | null>(null);
   const [spin, setSpin] = useState<number | null>(null);
+  const [mode, setMode] = useState<RollMode>("normal");
+  const modeRef = useRef<RollMode>("normal");
+  modeRef.current = mode;
   const timerRef = useRef<number | null>(null);
   const closeRef = useRef<number | null>(null);
 
@@ -32,8 +50,8 @@ export function DiceRollerProvider({ children }: { children: ReactNode }) {
 
   const roll = useCallback((req: RollRequest): Displayed => {
     clear();
-    // Compute the ACTUAL result once — single source of truth
-    const displayed = compute(req);
+    // Compute the ACTUAL result ONCE — single source of truth for popup + history
+    const displayed = compute(req, modeRef.current);
 
     // Visual spin phase (does not affect result)
     setActive(null);
@@ -67,9 +85,18 @@ export function DiceRollerProvider({ children }: { children: ReactNode }) {
             {active.lines.map((l, i) => (
               <div key={i} className={l.big ? "j-h text-4xl md:text-5xl my-2" : "text-lg my-1"}>
                 {l.label && <span className="text-[var(--color-muted)] text-sm mr-2">{l.label}</span>}
-                <span className={l.crit === "hit" ? "j-glow-text drop-shadow-[0_0_10px_var(--color-flame)]" : l.crit === "miss" ? "text-[var(--color-blood)]" : "j-glow-text"}>
-                  {l.value}
-                </span>
+                {l.pair ? (
+                  <span className="inline-flex items-center gap-3 tabular-nums">
+                    <span className={l.pair.mode === "adv" ? "text-emerald-400 drop-shadow-[0_0_10px_rgba(52,211,153,0.6)]" : "text-[var(--color-blood)] drop-shadow-[0_0_10px_rgba(190,40,40,0.6)]"}>
+                      {l.pair.mode === "adv" ? "▲" : "▼"}{l.pair.picked}
+                    </span>
+                    <span className="line-through opacity-40 text-[var(--color-muted)] text-[0.7em]">{l.pair.dropped}</span>
+                  </span>
+                ) : (
+                  <span className={l.crit === "hit" ? "j-glow-text drop-shadow-[0_0_10px_var(--color-flame)]" : l.crit === "miss" ? "text-[var(--color-blood)]" : "j-glow-text"}>
+                    {l.value}
+                  </span>
+                )}
               </div>
             ))}
             <div className="text-[10px] text-[var(--color-muted)] italic mt-3">tap to dismiss</div>
@@ -89,8 +116,10 @@ export function DiceRollerProvider({ children }: { children: ReactNode }) {
     ) : null
   ), [active, spin]);
 
+  const api = useMemo<Api>(() => ({ roll, mode, setMode }), [roll, mode]);
+
   return (
-    <Ctx.Provider value={roll}>
+    <Ctx.Provider value={api}>
       {children}
       {dot}
     </Ctx.Provider>
@@ -98,49 +127,53 @@ export function DiceRollerProvider({ children }: { children: ReactNode }) {
 }
 
 function fmt(n: number) { return n >= 0 ? `+${n}` : `${n}`; }
+export function modeTitle(mode: RollMode) {
+  return mode === "adv" ? "Rolling with Advantage" : mode === "dis" ? "Rolling with Disadvantage" : "";
+}
+export function modeTag(mode: RollMode) {
+  return mode === "adv" ? "[ADV] " : mode === "dis" ? "[DIS] " : "";
+}
 
-function compute(req: RollRequest): Displayed {
+function compute(req: RollRequest, mode: RollMode): Displayed {
+  const id = Date.now();
+  const suffix = mode === "normal" ? "" : ` — ${modeTitle(mode)}`;
+
   if (req.kind === "skill" || req.kind === "save") {
-    const d = rollDie(20);
-    const total = d + req.modifier;
+    const r = rollWithMode(20, req.modifier, mode);
+    const pair = mode === "normal" ? undefined : { picked: r.picked, dropped: r.a === r.picked ? (r.b as number) : r.a, mode: mode as "adv" | "dis" };
     return {
-      id: Date.now(),
-      title: `${req.label} ${req.kind === "save" ? "Save" : "Check"}`,
+      id,
+      title: `${req.label} ${req.kind === "save" ? "Save" : "Check"}${suffix}`,
       lines: [
-        { label: "d20", value: `[${d}] ${fmt(req.modifier)} = ${total}` },
-        { label: "", value: String(total), big: true },
+        ...(pair ? [{ label: "d20", value: "", pair }] : [{ label: "d20", value: `[${r.picked}] ${fmt(req.modifier)} = ${r.total}` }]),
+        { label: "", value: String(r.total), big: true },
       ],
-      summary: `[${d}]${fmt(req.modifier)} = ${total}`,
+      summary: `${modeTag(mode)}${r.display}${fmt(req.modifier)} = ${r.total}`,
     };
   }
+
   if (req.kind === "die") {
-    const mode = req.mode ?? "normal";
-    if (req.sides === 20 && mode !== "normal") {
-      const r = rollD20(mode);
-      return {
-        id: Date.now(),
-        title: `d20 (${mode === "adv" ? "Advantage" : "Disadvantage"})`,
-        lines: [
-          { label: "rolls", value: `[${r.a}] · [${r.b}]` },
-          { label: mode === "adv" ? "higher" : "lower", value: String(r.picked), big: true },
-        ],
-        summary: `[${r.a}·${r.b}] → ${r.picked}`,
-      };
-    }
-    const v = rollDie(req.sides);
+    const modifier = req.modifier ?? 0;
+    const r = rollWithMode(req.sides, modifier, mode);
+    const pair = mode === "normal" ? undefined : { picked: r.picked, dropped: r.a === r.picked ? (r.b as number) : r.a, mode: mode as "adv" | "dis" };
     return {
-      id: Date.now(),
-      title: `d${req.sides}`,
-      lines: [{ label: "", value: String(v), big: true }],
-      summary: String(v),
+      id,
+      title: mode === "normal" ? `d${req.sides}` : `${modeTitle(mode)} — d${req.sides}`,
+      lines: [
+        ...(pair ? [{ label: `d${req.sides}`, value: "", pair }] : []),
+        { label: "", value: String(r.total), big: true },
+        ...(modifier !== 0 ? [{ label: "with mod", value: `${r.picked} ${fmt(modifier)} = ${r.total}` }] : []),
+      ],
+      summary: `${modeTag(mode)}d${req.sides} → ${mode === "normal" ? `[${r.picked}]` : `[${r.picked}, ${pair!.dropped}]`}${modifier !== 0 ? ` ${fmt(modifier)}` : ""} = ${r.total}`,
     };
   }
+
   if (req.kind === "formula") {
-    const r = rollFormula(req.formula);
-    if (!r) return { id: Date.now(), title: "Invalid formula", lines: [{ label: "", value: req.formula }], summary: "invalid" };
+    const r = rollFormula(req.formula, mode);
+    if (!r) return { id, title: "Invalid formula", lines: [{ label: "", value: req.formula }], summary: "invalid" };
     return {
-      id: Date.now(),
-      title: req.label || r.formula,
+      id,
+      title: `${req.label || r.formula}${suffix}`,
       lines: [
         { label: r.formula, value: r.breakdown },
         { label: "", value: String(r.total), big: true },
@@ -148,10 +181,11 @@ function compute(req: RollRequest): Displayed {
       summary: `${r.breakdown} = ${r.total}`,
     };
   }
+
   // attack
-  const d20 = rollDie(20);
-  const attackTotal = d20 + req.attackBonus;
-  const crit = d20 === 20 ? "hit" : d20 === 1 ? "miss" : undefined;
+  const atk = rollWithMode(20, req.attackBonus, mode);
+  const crit = atk.picked === 20 ? "hit" : atk.picked === 1 ? "miss" : undefined;
+  const pair = mode === "normal" ? undefined : { picked: atk.picked, dropped: atk.a === atk.picked ? (atk.b as number) : atk.a, mode: mode as "adv" | "dis" };
   const dmg = rollFormula(req.damageFormula);
   let dmgLine = "—";
   let dmgTotal = 0;
@@ -167,16 +201,15 @@ function compute(req: RollRequest): Displayed {
     }
   }
   return {
-    id: Date.now(),
-    title: req.label,
+    id,
+    title: `${req.label}${suffix}`,
     lines: [
-      { label: "attack", value: `[${d20}]${fmt(req.attackBonus)} = ${attackTotal}`, crit },
+      ...(pair ? [{ label: "attack", value: "", pair }] : []),
+      { label: pair ? "total" : "attack", value: `[${atk.picked}]${fmt(req.attackBonus)} = ${atk.total}`, crit },
       ...(crit === "hit" ? [{ label: "", value: "CRITICAL HIT! 💥", crit: "hit" as const }] : []),
       ...(crit === "miss" ? [{ label: "", value: "Critical Miss! 💀", crit: "miss" as const }] : []),
-
       ...(dmg ? [{ label: "damage", value: dmgLine, big: true }] : []),
     ],
-    summary: `atk [${d20}]${fmt(req.attackBonus)}=${attackTotal}${dmg ? ` · dmg ${dmgTotal}` : ""}${crit === "hit" ? " CRIT" : ""}`,
+    summary: `${modeTag(mode)}atk ${atk.display}${fmt(req.attackBonus)}=${atk.total}${dmg ? ` · dmg ${dmgTotal}` : ""}${crit === "hit" ? " CRIT" : ""}`,
   };
 }
-
