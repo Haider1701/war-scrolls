@@ -536,6 +536,73 @@ export type Database = {
           },
         ]
       }
+      player_notifications: {
+        Row: {
+          campaign_id: string | null
+          character_id: string | null
+          created_at: string
+          from_user_id: string
+          id: string
+          is_read: boolean
+          kind: string
+          membership_id: string | null
+          message: string
+          player_user_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          campaign_id?: string | null
+          character_id?: string | null
+          created_at?: string
+          from_user_id: string
+          id?: string
+          is_read?: boolean
+          kind?: string
+          membership_id?: string | null
+          message?: string
+          player_user_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          campaign_id?: string | null
+          character_id?: string | null
+          created_at?: string
+          from_user_id?: string
+          id?: string
+          is_read?: boolean
+          kind?: string
+          membership_id?: string | null
+          message?: string
+          player_user_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "player_notifications_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "player_notifications_character_id_fkey"
+            columns: ["character_id"]
+            isOneToOne: false
+            referencedRelation: "characters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "player_notifications_membership_id_fkey"
+            columns: ["membership_id"]
+            isOneToOne: false
+            referencedRelation: "campaign_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sessions: {
         Row: {
           character_id: string
