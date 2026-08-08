@@ -30,14 +30,15 @@ async function fetchSheetData(character: Character): Promise<SheetData> {
 }
 
 /** Builds and downloads a 3-page themed character sheet PDF. */
-export async function exportCharacterPdf(character: Character) {
+export async function exportCharacterPdf(character: Character, exportNote?: string) {
   const [{ pdf }, { CharacterSheetPdf }, React] = await Promise.all([
     import("@react-pdf/renderer"),
     import("./CharacterSheetPdf"),
     import("react"),
   ]);
-  const data = await fetchSheetData(character);
+  const data = { ...(await fetchSheetData(character)), exportNote };
   const blob = await pdf(React.createElement(CharacterSheetPdf, { data }) as any).toBlob();
+
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;

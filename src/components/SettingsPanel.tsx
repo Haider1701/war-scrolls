@@ -8,6 +8,7 @@ import { CampaignsPanel } from "./CampaignsPanel";
 import { CampaignBadge } from "./CampaignBadge";
 import { GmNotifications } from "./GmNotifications";
 import { DmDashboardButton } from "./DmDashboard";
+import { PlayerNotifications } from "./PlayerNotifications";
 
 const db = supabase as any;
 
@@ -208,6 +209,7 @@ export function SettingsPanel({
               )}
               <DmDashboardButton userId={userId} />
               <GmNotifications userId={userId} />
+              <PlayerNotifications userId={userId} />
             </nav>
           </section>
 

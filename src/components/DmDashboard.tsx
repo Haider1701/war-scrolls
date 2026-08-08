@@ -5,6 +5,7 @@ import type {
   Skill, Spell, SpellMeta, Traits,
 } from "@/lib/types";
 import { abilityMod, fmtMod, formatMulticlass, totalLevel } from "@/lib/types";
+import { DmSheetView } from "./DmSheetView";
 
 const db = supabase as any;
 
@@ -86,7 +87,9 @@ export function DmDashboardButton({ userId }: { userId: string }) {
 function DmDashboard({ userId, onClose }: { userId: string; onClose: () => void }) {
   const [rows, setRows] = useState<CampaignWithMembers[]>([]);
   const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(null);
-  const [selectedSheet, setSelectedSheet] = useState<Character | null>(null);
+  const [selectedSheet, setSelectedSheet] = useState<{ character: Character; playerName: string; campaignName: string } | null>(null);
+  const [requesting, setRequesting] = useState<string | null>(null);
+  const [requested, setRequested] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(true);
   const [notesDraft, setNotesDraft] = useState<string>("");
   const [notesSaving, setNotesSaving] = useState(false);
@@ -147,6 +150,23 @@ function DmDashboard({ userId, onClose }: { userId: string; onClose: () => void 
     setLoading(false);
   }, [userId]);
 
+  async function requestAccess(m: Member, campaign: Campaign) {
+    setRequesting(m.membership_id);
+    const { data: prof } = await db.from("user_profiles").select("display_name").eq("user_id", userId).maybeSingle();
+    const dmName = prof?.display_name ?? "Your DM";
+    await db.from("player_notifications").insert({
+      player_user_id: m.player_user_id,
+      from_user_id: userId,
+      campaign_id: campaign.id,
+      membership_id: m.membership_id,
+      character_id: m.character_id,
+      kind: "sheet_access_request",
+      message: `📖 ${dmName} from campaign ${campaign.name} is requesting access to view your character sheet.`,
+    });
+    setRequested((r) => ({ ...r, [m.membership_id]: true }));
+    setRequesting(null);
+  }
+
   useEffect(() => { load(); }, [load]);
 
   useEffect(() => {
@@ -154,6 +174,7 @@ function DmDashboard({ userId, onClose }: { userId: string; onClose: () => void 
       .channel("dm-dash-members-" + userId)
       .on("postgres_changes", { event: "*", schema: "public", table: "campaign_members" }, () => load())
       .on("postgres_changes", { event: "*", schema: "public", table: "campaigns", filter: `dm_user_id=eq.${userId}` }, () => load())
+      .on("postgres_changes", { event: "*", schema: "public", table: "player_notifications", filter: `from_user_id=eq.${userId}` }, () => load())
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, [userId, load]);
@@ -395,7 +416,17 @@ function DmDashboard({ userId, onClose }: { userId: string; onClose: () => void 
                       <RosterCard
                         key={m.membership_id}
                         member={m}
-                        onView={() => m.character && setSelectedSheet(m.character)}
+                        requesting={requesting === m.membership_id}
+                        requested={!!requested[m.membership_id]}
+                        onRequest={() => requestAccess(m, selected.campaign)}
+                        onView={() =>
+                          m.character &&
+                          setSelectedSheet({
+                            character: m.character,
+                            playerName: m.player_name,
+                            campaignName: selected.campaign.name,
+                          })
+                        }
                       />
                     ))}
                   </div>
@@ -406,7 +437,14 @@ function DmDashboard({ userId, onClose }: { userId: string; onClose: () => void 
         </div>
       </div>
 
-      {selectedSheet && <ReadOnlySheetModal character={selectedSheet} onClose={() => setSelectedSheet(null)} />}
+      {selectedSheet && (
+        <DmSheetView
+          character={selectedSheet.character}
+          playerName={selectedSheet.playerName}
+          campaignName={selectedSheet.campaignName}
+          onClose={() => setSelectedSheet(null)}
+        />
+      )}
     </>
   );
 }
@@ -430,7 +468,9 @@ function StatBubble({ label, value, icon, accent }: { label: string; value: numb
   );
 }
 
-function RosterCard({ member, onView }: { member: Member; onView: () => void }) {
+function RosterCard({ member, onView, onRequest, requesting, requested }: {
+  member: Member; onView: () => void; onRequest: () => void; requesting: boolean; requested: boolean;
+}) {
   const c = member.character;
   const shared = member.share_sheet_with_dm;
 
@@ -485,21 +525,30 @@ function RosterCard({ member, onView }: { member: Member; onView: () => void }) 
               {shared ? (
                 <button
                   onClick={onView}
-                  className="j-btn j-btn-ghost !py-1 !px-3 text-xs w-full"
-                  style={{ borderColor: "rgba(255,106,0,0.4)" }}
+                  className="j-btn !py-1 !px-3 text-xs w-full"
+                  style={{ borderColor: "rgba(255,106,0,0.55)" }}
                 >
                   👁 View Full Sheet
                 </button>
               ) : (
-                <div
-                  className="text-[10px] italic px-2 py-1.5 rounded-lg text-center"
-                  style={{
-                    background: "rgba(120,120,120,0.08)",
-                    border: "1px dashed rgba(150,150,150,0.3)",
-                    color: "var(--color-muted)",
-                  }}
-                >
-                  🔒 Sheet Access Pending — player must grant access
+                <div className="space-y-1.5">
+                  <div
+                    className="text-[10px] italic px-2 py-1.5 rounded-lg text-center"
+                    style={{
+                      background: "rgba(120,120,120,0.08)",
+                      border: "1px dashed rgba(150,150,150,0.3)",
+                      color: "var(--color-muted)",
+                    }}
+                  >
+                    🔒 Access Not Granted
+                  </div>
+                  <button
+                    onClick={onRequest}
+                    disabled={requesting || requested}
+                    className="j-btn j-btn-ghost !py-1 !px-3 text-xs w-full"
+                  >
+                    {requested ? "📨 Request Sent" : requesting ? "Sending…" : "📨 Request Access"}
+                  </button>
                 </div>
               )}
             </div>

@@ -18,6 +18,8 @@ export type SheetData = {
   traits: Traits | null;
   notes: FreeNotes | null;
   sessions: Session[];
+  /** Optional provenance line appended to every page footer (e.g. DM export note). */
+  exportNote?: string;
 };
 
 function makeStyles(p: PdfPalette) {
@@ -170,7 +172,7 @@ export function CharacterSheetPdf({ data }: { data: SheetData }) {
           )}
         </View>
 
-        <Text style={s.footer}>{c.name || "Unnamed"} · Page 1 of 3 · Main Sheet</Text>
+        <Text style={s.footer}>{c.name || "Unnamed"} · Page 1 of 3 · Main Sheet{data.exportNote ? ` · ${data.exportNote}` : ""}</Text>
       </Page>
 
       {/* PAGE 2 — SPELLS */}
@@ -213,7 +215,7 @@ export function CharacterSheetPdf({ data }: { data: SheetData }) {
           </View>
         ))}
 
-        <Text style={s.footer}>{c.name || "Unnamed"} · Page 2 of 3 · Spellbook</Text>
+        <Text style={s.footer}>{c.name || "Unnamed"} · Page 2 of 3 · Spellbook{data.exportNote ? ` · ${data.exportNote}` : ""}</Text>
       </Page>
 
       {/* PAGE 3 — NOTES / BACKSTORY / SESSIONS */}
@@ -262,7 +264,7 @@ export function CharacterSheetPdf({ data }: { data: SheetData }) {
           <Text style={s.p}>{data.notes?.content || "Blank pages await."}</Text>
         </View>
 
-        <Text style={s.footer}>{c.name || "Unnamed"} · Page 3 of 3 · Chronicle</Text>
+        <Text style={s.footer}>{c.name || "Unnamed"} · Page 3 of 3 · Chronicle{data.exportNote ? ` · ${data.exportNote}` : ""}</Text>
       </Page>
     </Document>
   );
