@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState, type ReactElement } from "react";
 import type { Character } from "@/lib/types";
 import { loadCodexData, type CodexData } from "@/lib/codexData";
-import { exportCharacterPdf } from "@/lib/pdf/exportCharacterPdf";
+import { ExportPdfModal } from "@/components/pdf/ExportPdfModal";
 import { PdfImportPanel } from "./PdfImportPanel";
 import {
   CombatPage, CoverPage, FeaturesPage, GalleryPage, InventoryPage,
@@ -63,10 +63,6 @@ export function Codex({ character, onClose }: { character: Character; onClose: (
     [data, prevIdx],
   );
 
-  async function doExport() {
-    setExporting(true);
-    try { await exportCharacterPdf(character); } finally { setExporting(false); }
-  }
 
   return (
     <div className="cdx-root">
@@ -86,9 +82,7 @@ export function Codex({ character, onClose }: { character: Character; onClose: (
         </nav>
         <div className="flex gap-2 shrink-0">
           <button className="j-btn" onClick={() => setImporting(true)}>Import PDF</button>
-          <button className="j-btn j-btn-ghost" onClick={doExport} disabled={exporting}>
-            {exporting ? "Binding…" : "Export PDF"}
-          </button>
+          <button className="j-btn j-btn-ghost" onClick={() => setExporting(true)}>Export PDF</button>
         </div>
       </div>
 
@@ -114,6 +108,8 @@ export function Codex({ character, onClose }: { character: Character; onClose: (
         <button className="cdx-arrow cdx-arrow-l" onClick={() => turn(-1)} disabled={idx === 0} aria-label="Previous page">‹</button>
         <button className="cdx-arrow cdx-arrow-r" onClick={() => turn(1)} disabled={idx === CHAPTERS.length - 1} aria-label="Next page">›</button>
       </div>
+
+      {exporting && <ExportPdfModal character={character} onClose={() => setExporting(false)} />}
 
       {importing && (
         <PdfImportPanel

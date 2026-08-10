@@ -9,6 +9,7 @@ import { CampaignBadge } from "./CampaignBadge";
 import { GmNotifications } from "./GmNotifications";
 import { DmDashboardButton } from "./DmDashboard";
 import { PlayerNotifications } from "./PlayerNotifications";
+import { ExportPdfModal } from "./pdf/ExportPdfModal";
 
 const db = supabase as any;
 
@@ -41,19 +42,6 @@ export function SettingsPanel({
 
   const activeChar = characters.find((c) => c.id === activeCharacterId) ?? null;
 
-  async function doExport() {
-    if (!activeChar) return;
-    setExporting(true);
-    setExportErr(null);
-    try {
-      const { exportCharacterPdf } = await import("@/lib/pdf/exportCharacterPdf");
-      await exportCharacterPdf(activeChar);
-    } catch (e: any) {
-      setExportErr(e?.message ?? "Could not create the PDF.");
-    } finally {
-      setExporting(false);
-    }
-  }
 
   useEffect(() => {
     (async () => {
@@ -323,12 +311,15 @@ export function SettingsPanel({
           <section>
             <div className="text-[10px] uppercase tracking-widest text-[var(--color-muted)] mb-2">Export</div>
             <div className="j-card">
-              <button className="j-btn w-full" disabled={exporting || !activeChar} onClick={doExport}>
-                {exporting ? "Scribing…" : "Export Character Sheet (PDF)"}
+              <button className="j-btn w-full" disabled={!activeChar} onClick={() => setExporting(true)}>
+                Export Character Sheet (PDF)
               </button>
               {exportErr && <p className="text-xs text-[var(--color-blood)] mt-2">{exportErr}</p>}
+              {exporting && activeChar && (
+                <ExportPdfModal character={activeChar} onClose={() => setExporting(false)} />
+              )}
               <p className="text-[11px] italic text-[var(--color-muted)] mt-2">
-                Three themed pages: Main Sheet, Spellbook, and Chronicle &amp; Notes.
+                Four themed pages: Cover, Portrait, Stats, and Chronicle.
               </p>
             </div>
           </section>

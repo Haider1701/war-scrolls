@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { ExportPdfModal } from "./pdf/ExportPdfModal";
 import type { Character } from "@/lib/types";
 import { applyThemeVars, type ThemeId } from "./ThemeProvider";
 import type { CustomTheme } from "@/lib/themes";
@@ -55,18 +56,6 @@ export function DmSheetView({
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
 
-  async function doExport() {
-    setExporting(true);
-    setExportErr(null);
-    try {
-      const { exportCharacterPdf } = await import("@/lib/pdf/exportCharacterPdf");
-      await exportCharacterPdf(character, `Exported by DM · ${campaignName} · ${new Date().toLocaleDateString()}`);
-    } catch (e: any) {
-      setExportErr(e?.message ?? "Could not create the PDF.");
-    } finally {
-      setExporting(false);
-    }
-  }
 
   function content(id: string) {
     if (id === "cover") return <CoverTab character={character} onChange={async () => {}} readOnly />;
@@ -104,9 +93,16 @@ export function DmSheetView({
             <span className="text-[var(--color-muted)] text-xs"> · {campaignName}</span>
           </div>
         </div>
-        <button className="j-btn !py-1 !px-3 text-xs" disabled={exporting} onClick={doExport}>
-          {exporting ? "Preparing…" : "📄 Export Sheet"}
+        <button className="j-btn !py-1 !px-3 text-xs" onClick={() => setExporting(true)}>
+          📄 Export Sheet
         </button>
+        {exporting && (
+          <ExportPdfModal
+            character={character}
+            exportNote={`Exported by DM · ${campaignName} · ${new Date().toLocaleDateString()}`}
+            onClose={() => setExporting(false)}
+          />
+        )}
       </div>
 
       {exportErr && (
