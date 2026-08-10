@@ -316,7 +316,7 @@ export function CharacterSheetPdf({ data }: { data: SheetData }) {
           <View style={{ flexDirection: "row", flexWrap: "wrap" }}>
             {data.equipment.length === 0 ? <Text style={s.label}>Empty pack</Text> : data.equipment.map((e) => (
               <Text key={e.id} style={{ width: "50%", marginBottom: 1.5, fontSize: 7.5 }}>
-                {e.emoji_icon ? `${e.emoji_icon} ` : "· "}{e.name}{e.quantity > 1 ? ` ×${e.quantity}` : ""}
+                · {e.name}{e.quantity > 1 ? ` ×${e.quantity}` : ""}
               </Text>
             ))}
           </View>
@@ -401,7 +401,7 @@ export function CharacterSheetPdf({ data }: { data: SheetData }) {
                   Session {sn.session_number}{sn.title ? ` — ${sn.title}` : ""}{sn.date_played ? `  (${sn.date_played})` : ""}
                 </Text>
               </View>
-              {(sn.notes ?? []).map((n, i) => <Text key={i} style={s.p}>🔥 {n}</Text>)}
+              {(sn.notes ?? []).map((n, i) => <Text key={i} style={s.p}>• {n}</Text>)}
               {sn.encounter_notes ? <Text style={s.label}>Encounters: {sn.encounter_notes}</Text> : null}
               {[0, 1, 2, 3].map((i) => <View key={i} style={s.ruled} />)}
             </View>
@@ -435,7 +435,7 @@ export function CharacterSheetPdf({ data }: { data: SheetData }) {
       <View style={{ flexDirection: "row", flexWrap: "wrap" }}>
         {data.npcs.length === 0 ? <Text style={s.label}>No figures recorded.</Text> : data.npcs.slice(0, 9).map((n) => (
           <View key={n.id} style={s.npcCard}>
-            <Text style={{ fontSize: 12 }}>{n.emoji_icon || "❖"}</Text>
+            <Text style={{ fontSize: 12, color: p.accent2, fontFamily: f.heading }}>{(n.name || "?").trim().charAt(0).toUpperCase()}</Text>
             <Text style={{ color: p.ink }}>{n.name || "Unknown"}</Text>
             <Text style={s.label}>{n.role || "—"}</Text>
             <Text style={{ ...s.badge, backgroundColor: dispColor(n.disposition, p) }}>{(n.disposition || "neutral").toUpperCase()}</Text>
