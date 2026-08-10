@@ -231,10 +231,14 @@ export function CharacterSheetPdf({ data }: { data: SheetData }) {
             <Image src={primary} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
           ) : (
             <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-              <Text style={{ fontSize: 40, color: p.accent }}>❖</Text>
+              <View style={{ width: 34, height: 34, borderWidth: 1.4, borderColor: p.accent, borderRadius: 3, transform: "rotate(45deg)" }} />
               <Text style={{ ...s.title, marginTop: 6 }}>{c.name || "Unnamed"}</Text>
               <Text style={s.subtitle}>No portrait committed to these pages</Text>
-              <Text style={{ fontSize: 26, color: p.accent2, marginTop: 8 }}>✶ ❦ ✶</Text>
+              <View style={{ flexDirection: "row", alignItems: "center", marginTop: 12 }}>
+                <View style={{ width: 60, height: 1, backgroundColor: p.accent, opacity: 0.6 }} />
+                <View style={{ width: 8, height: 8, marginHorizontal: 6, backgroundColor: p.accent2, transform: "rotate(45deg)" }} />
+                <View style={{ width: 60, height: 1, backgroundColor: p.accent, opacity: 0.6 }} />
+              </View>
             </View>
           )}
           <View style={{ position: "absolute", bottom: 0, left: 0, right: 0, backgroundColor: p.bg, opacity: 0.82, paddingVertical: 8, paddingHorizontal: 10 }} />
