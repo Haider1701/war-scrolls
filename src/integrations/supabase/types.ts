@@ -203,6 +203,7 @@ export type Database = {
       characters: {
         Row: {
           affliction_note: string | null
+          ai_generated: boolean
           alignment: string | null
           armor_class: number | null
           armor_notes: string
@@ -250,6 +251,7 @@ export type Database = {
         }
         Insert: {
           affliction_note?: string | null
+          ai_generated?: boolean
           alignment?: string | null
           armor_class?: number | null
           armor_notes?: string
@@ -297,6 +299,7 @@ export type Database = {
         }
         Update: {
           affliction_note?: string | null
+          ai_generated?: boolean
           alignment?: string | null
           armor_class?: number | null
           armor_notes?: string
@@ -864,18 +867,21 @@ export type Database = {
       }
       user_profiles: {
         Row: {
+          ai_backstory_count: number
           created_at: string
           display_name: string
           updated_at: string
           user_id: string
         }
         Insert: {
+          ai_backstory_count?: number
           created_at?: string
           display_name?: string
           updated_at?: string
           user_id: string
         }
         Update: {
+          ai_backstory_count?: number
           created_at?: string
           display_name?: string
           updated_at?: string

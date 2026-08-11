@@ -1,0 +1,2 @@
+ALTER TABLE public.user_profiles ADD COLUMN IF NOT EXISTS ai_backstory_count integer NOT NULL DEFAULT 0;
+ALTER TABLE public.characters ADD COLUMN IF NOT EXISTS ai_generated boolean NOT NULL DEFAULT false;
