@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Character, Traits } from "@/lib/types";
+import { formatMulticlass } from "@/lib/types";
+import { BackstoryGeneratorModal } from "@/components/BackstoryGeneratorModal";
+
 
 const db = supabase as any;
 
