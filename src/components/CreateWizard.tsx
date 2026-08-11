@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { BackstoryGeneratorModal } from "@/components/BackstoryGeneratorModal";
 import { supabase } from "@/integrations/supabase/client";
 import { abilityMod, fmtMod, MAX_IMAGES, MAX_NPCS, MAX_PLAYERS, type CharacterType } from "@/lib/types";
 import { Embers } from "./Embers";
@@ -26,7 +27,11 @@ export function CreateWizard({
   const [background, setBackground] = useState("");
   const [scores, setScores] = useState({ strength: 10, dexterity: 10, constitution: 10, intelligence: 10, wisdom: 10, charisma: 10 });
   const [images, setImages] = useState<PendingImage[]>([]);
+  const [backstory, setBackstory] = useState("");
+  const [aiGen, setAiGen] = useState(false);
+  const [genOpen, setGenOpen] = useState(false);
   const [primaryIdx, setPrimaryIdx] = useState(0);
+
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState("");
 
@@ -50,7 +55,8 @@ export function CreateWizard({
 
   // NPC has fewer steps: 1=basics, 2=portraits, 3=review
   const isNpc = type === "npc";
-  const lastStep = isNpc ? 3 : 4;
+  const lastStep = isNpc ? 3 : 5;
+
 
   async function save() {
     if (!type) return;
@@ -71,9 +77,12 @@ export function CreateWizard({
         class_level: isNpc ? "" : classLevel,
         class_level_2: isNpc ? null : (classLevel2.trim() || null),
         race, alignment, background: isNpc ? "" : background,
+        backstory: isNpc ? "" : backstory,
+        ai_generated: isNpc ? false : aiGen,
         proficiency_bonus: 2,
         passive_perception: 10 + abilityMod(scores.wisdom),
       }).select().single();
+
       if (e1) throw e1;
 
       // Upload images
@@ -230,6 +239,42 @@ export function CreateWizard({
               )}
             </div>
           )}
+
+          {/* Backstory step (player characters only) */}
+          {!isNpc && step === 4 && (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="j-h text-lg">Backstory</h3>
+                {aiGen && (
+                  <span className="text-[10px] uppercase tracking-widest px-2 py-0.5 rounded-full border border-[var(--color-ember)] text-[var(--color-ember)]">
+                    ✨ AI Generated
+                  </span>
+                )}
+                <div className="flex-1" />
+                <button className="j-btn" onClick={() => setGenOpen(true)}>✨ Generate with AI</button>
+              </div>
+              <textarea
+                className="j-textarea text-justify"
+                rows={9}
+                style={{ textIndent: "2em" }}
+                value={backstory}
+                onChange={(e) => { setBackstory(e.target.value); }}
+                placeholder="Write your tale, or let the embers write it for you…"
+              />
+              <p className="text-xs text-[var(--color-muted)] italic">Optional — you can always write this later.</p>
+              {genOpen && (
+                <BackstoryGeneratorModal
+                  race={race}
+                  klass={[classLevel, classLevel2].filter(Boolean).join(" / ")}
+                  alignment={alignment}
+                  hasExisting={Boolean(backstory.trim())}
+                  onClose={() => setGenOpen(false)}
+                  onKeep={(t) => { setBackstory(t); setAiGen(true); setGenOpen(false); }}
+                />
+              )}
+            </div>
+          )}
+
 
           {/* Review step */}
           {step === lastStep && (

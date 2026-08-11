@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Character, Traits } from "@/lib/types";
+import { formatMulticlass } from "@/lib/types";
+import { BackstoryGeneratorModal } from "@/components/BackstoryGeneratorModal";
+
 
 const db = supabase as any;
 
@@ -15,6 +18,8 @@ export function BackstoryTab({ character, onChange, readOnly }: {
   character: Character; onChange: (c: Character) => void; readOnly: boolean;
 }) {
   const [traits, setTraits] = useState<Traits | null>(null);
+  const [genOpen, setGenOpen] = useState(false);
+
 
   useEffect(() => {
     (async () => {
@@ -43,7 +48,18 @@ export function BackstoryTab({ character, onChange, readOnly }: {
   return (
     <div className="j-fade space-y-6">
       <div>
-        <h3 className="j-h text-xl mb-3">📖 Backstory</h3>
+        <div className="flex items-center gap-2 mb-3 flex-wrap">
+          <h3 className="j-h text-xl">📖 Backstory</h3>
+          {character.ai_generated && (
+            <span className="text-[10px] uppercase tracking-widest px-2 py-0.5 rounded-full border border-[var(--color-ember)] text-[var(--color-ember)]">
+              ✨ AI Generated
+            </span>
+          )}
+          <div className="flex-1" />
+          {!readOnly && (
+            <button className="j-btn" onClick={() => setGenOpen(true)}>✨ Generate Backstory</button>
+          )}
+        </div>
         {readOnly ? (
           <div className="j-card whitespace-pre-wrap text-justify" style={{ textIndent: "2em", lineHeight: 1.9 }}>
             {character.backstory || <span className="italic text-[var(--color-muted)]">No tale recorded.</span>}
@@ -58,7 +74,22 @@ export function BackstoryTab({ character, onChange, readOnly }: {
             placeholder="Begin your tale here…"
           />
         )}
+        {genOpen && (
+          <BackstoryGeneratorModal
+            race={character.race}
+            klass={formatMulticlass(character.class_level, character.class_level_2)}
+            alignment={character.alignment}
+            hasExisting={Boolean(character.backstory?.trim())}
+            onClose={() => setGenOpen(false)}
+            onKeep={async (t) => {
+              setGenOpen(false);
+              onChange({ ...character, backstory: t, ai_generated: true });
+              await db.from("characters").update({ backstory: t, ai_generated: true }).eq("id", character.id);
+            }}
+          />
+        )}
       </div>
+
 
       <div>
         <h3 className="j-h text-xl mb-3">✦ Traits</h3>
