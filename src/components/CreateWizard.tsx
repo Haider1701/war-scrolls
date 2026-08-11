@@ -26,7 +26,11 @@ export function CreateWizard({
   const [background, setBackground] = useState("");
   const [scores, setScores] = useState({ strength: 10, dexterity: 10, constitution: 10, intelligence: 10, wisdom: 10, charisma: 10 });
   const [images, setImages] = useState<PendingImage[]>([]);
+  const [backstory, setBackstory] = useState("");
+  const [aiGen, setAiGen] = useState(false);
+  const [genOpen, setGenOpen] = useState(false);
   const [primaryIdx, setPrimaryIdx] = useState(0);
+
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState("");
 
