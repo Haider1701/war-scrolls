@@ -239,6 +239,42 @@ export function CreateWizard({
             </div>
           )}
 
+          {/* Backstory step (player characters only) */}
+          {!isNpc && step === 4 && (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="j-h text-lg">Backstory</h3>
+                {aiGen && (
+                  <span className="text-[10px] uppercase tracking-widest px-2 py-0.5 rounded-full border border-[var(--color-ember)] text-[var(--color-ember)]">
+                    ✨ AI Generated
+                  </span>
+                )}
+                <div className="flex-1" />
+                <button className="j-btn" onClick={() => setGenOpen(true)}>✨ Generate with AI</button>
+              </div>
+              <textarea
+                className="j-textarea text-justify"
+                rows={9}
+                style={{ textIndent: "2em" }}
+                value={backstory}
+                onChange={(e) => { setBackstory(e.target.value); }}
+                placeholder="Write your tale, or let the embers write it for you…"
+              />
+              <p className="text-xs text-[var(--color-muted)] italic">Optional — you can always write this later.</p>
+              {genOpen && (
+                <BackstoryGeneratorModal
+                  race={race}
+                  klass={[classLevel, classLevel2].filter(Boolean).join(" / ")}
+                  alignment={alignment}
+                  hasExisting={Boolean(backstory.trim())}
+                  onClose={() => setGenOpen(false)}
+                  onKeep={(t) => { setBackstory(t); setAiGen(true); setGenOpen(false); }}
+                />
+              )}
+            </div>
+          )}
+
+
           {/* Review step */}
           {step === lastStep && (
             <div className="space-y-1 text-sm">
