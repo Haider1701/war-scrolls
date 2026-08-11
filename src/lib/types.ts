@@ -26,7 +26,9 @@ export type Character = {
   weapons_prof: string;
   tools_prof: string;
   backstory: string;
+  ai_generated?: boolean;
   features: { title: string; description: string }[];
+
   npc_quotes: string;
   npc_actions: string;
   theme?: ThemeId | null;
