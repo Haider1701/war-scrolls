@@ -72,9 +72,12 @@ export function CreateWizard({
         class_level: isNpc ? "" : classLevel,
         class_level_2: isNpc ? null : (classLevel2.trim() || null),
         race, alignment, background: isNpc ? "" : background,
+        backstory: isNpc ? "" : backstory,
+        ai_generated: isNpc ? false : aiGen,
         proficiency_bonus: 2,
         passive_perception: 10 + abilityMod(scores.wisdom),
       }).select().single();
+
       if (e1) throw e1;
 
       // Upload images
