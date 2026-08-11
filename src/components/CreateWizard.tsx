@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { BackstoryGeneratorModal } from "@/components/BackstoryGeneratorModal";
 import { supabase } from "@/integrations/supabase/client";
 import { abilityMod, fmtMod, MAX_IMAGES, MAX_NPCS, MAX_PLAYERS, type CharacterType } from "@/lib/types";
 import { Embers } from "./Embers";
