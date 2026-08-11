@@ -18,6 +18,8 @@ export function BackstoryTab({ character, onChange, readOnly }: {
   character: Character; onChange: (c: Character) => void; readOnly: boolean;
 }) {
   const [traits, setTraits] = useState<Traits | null>(null);
+  const [genOpen, setGenOpen] = useState(false);
+
 
   useEffect(() => {
     (async () => {
