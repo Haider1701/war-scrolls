@@ -50,7 +50,8 @@ export function CreateWizard({
 
   // NPC has fewer steps: 1=basics, 2=portraits, 3=review
   const isNpc = type === "npc";
-  const lastStep = isNpc ? 3 : 4;
+  const lastStep = isNpc ? 3 : 5;
+
 
   async function save() {
     if (!type) return;
