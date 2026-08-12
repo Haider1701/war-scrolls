@@ -90,6 +90,53 @@ export type Database = {
           },
         ]
       }
+      campaign_maps: {
+        Row: {
+          campaign_id: string
+          created_at: string
+          height_px: number
+          id: string
+          image_url: string
+          is_active: boolean
+          name: string
+          storage_path: string | null
+          updated_at: string
+          width_px: number
+        }
+        Insert: {
+          campaign_id: string
+          created_at?: string
+          height_px?: number
+          id?: string
+          image_url: string
+          is_active?: boolean
+          name?: string
+          storage_path?: string | null
+          updated_at?: string
+          width_px?: number
+        }
+        Update: {
+          campaign_id?: string
+          created_at?: string
+          height_px?: number
+          id?: string
+          image_url?: string
+          is_active?: boolean
+          name?: string
+          storage_path?: string | null
+          updated_at?: string
+          width_px?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_maps_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       campaign_members: {
         Row: {
           campaign_id: string
@@ -487,6 +534,89 @@ export type Database = {
             columns: ["spell_id"]
             isOneToOne: false
             referencedRelation: "spells"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      map_pins: {
+        Row: {
+          campaign_id: string
+          character_id: string | null
+          created_at: string
+          description: string
+          id: string
+          is_visible_to_players: boolean
+          label: string
+          map_id: string
+          pin_type: string
+          placed_by: string
+          player_user_id: string | null
+          session_id: string | null
+          updated_at: string
+          x_percent: number
+          y_percent: number
+        }
+        Insert: {
+          campaign_id: string
+          character_id?: string | null
+          created_at?: string
+          description?: string
+          id?: string
+          is_visible_to_players?: boolean
+          label?: string
+          map_id: string
+          pin_type?: string
+          placed_by?: string
+          player_user_id?: string | null
+          session_id?: string | null
+          updated_at?: string
+          x_percent?: number
+          y_percent?: number
+        }
+        Update: {
+          campaign_id?: string
+          character_id?: string | null
+          created_at?: string
+          description?: string
+          id?: string
+          is_visible_to_players?: boolean
+          label?: string
+          map_id?: string
+          pin_type?: string
+          placed_by?: string
+          player_user_id?: string | null
+          session_id?: string | null
+          updated_at?: string
+          x_percent?: number
+          y_percent?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "map_pins_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "map_pins_character_id_fkey"
+            columns: ["character_id"]
+            isOneToOne: false
+            referencedRelation: "characters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "map_pins_map_id_fkey"
+            columns: ["map_id"]
+            isOneToOne: false
+            referencedRelation: "campaign_maps"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "map_pins_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
             referencedColumns: ["id"]
           },
         ]
@@ -895,6 +1025,7 @@ export type Database = {
     }
     Functions: {
       is_campaign_dm: { Args: { _campaign_id: string }; Returns: boolean }
+      is_campaign_member: { Args: { _campaign_id: string }; Returns: boolean }
       is_character_owner: { Args: { _character_id: string }; Returns: boolean }
       is_shared_with_dm: { Args: { _character_id: string }; Returns: boolean }
     }
