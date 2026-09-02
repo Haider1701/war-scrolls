@@ -6,6 +6,7 @@ import type {
 } from "@/lib/types";
 import { abilityMod, fmtMod, formatMulticlass, totalLevel } from "@/lib/types";
 import { DmSheetView } from "./DmSheetView";
+import { WorldMapPanel } from "./map/WorldMapPanel";
 
 const db = supabase as any;
 
