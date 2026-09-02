@@ -394,6 +394,153 @@ export type Database = {
         }
         Relationships: []
       }
+      combat_combatants: {
+        Row: {
+          ac: number
+          campaign_id: string
+          character_id: string | null
+          color: string
+          combat_session_id: string
+          combatant_type: string
+          concentration_spell: string | null
+          created_at: string
+          death_save_failures: number
+          death_save_successes: number
+          dex_score: number
+          hp_current: number
+          hp_max: number
+          hp_temp: number
+          id: string
+          initiative_modifier: number
+          initiative_roll: number
+          is_defeated: boolean
+          name: string
+          notes: string
+          player_user_id: string | null
+          speed: number
+          status_conditions: string[]
+          turn_order: number
+          updated_at: string
+        }
+        Insert: {
+          ac?: number
+          campaign_id: string
+          character_id?: string | null
+          color?: string
+          combat_session_id: string
+          combatant_type?: string
+          concentration_spell?: string | null
+          created_at?: string
+          death_save_failures?: number
+          death_save_successes?: number
+          dex_score?: number
+          hp_current?: number
+          hp_max?: number
+          hp_temp?: number
+          id?: string
+          initiative_modifier?: number
+          initiative_roll?: number
+          is_defeated?: boolean
+          name?: string
+          notes?: string
+          player_user_id?: string | null
+          speed?: number
+          status_conditions?: string[]
+          turn_order?: number
+          updated_at?: string
+        }
+        Update: {
+          ac?: number
+          campaign_id?: string
+          character_id?: string | null
+          color?: string
+          combat_session_id?: string
+          combatant_type?: string
+          concentration_spell?: string | null
+          created_at?: string
+          death_save_failures?: number
+          death_save_successes?: number
+          dex_score?: number
+          hp_current?: number
+          hp_max?: number
+          hp_temp?: number
+          id?: string
+          initiative_modifier?: number
+          initiative_roll?: number
+          is_defeated?: boolean
+          name?: string
+          notes?: string
+          player_user_id?: string | null
+          speed?: number
+          status_conditions?: string[]
+          turn_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "combat_combatants_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "combat_combatants_character_id_fkey"
+            columns: ["character_id"]
+            isOneToOne: false
+            referencedRelation: "characters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "combat_combatants_combat_session_id_fkey"
+            columns: ["combat_session_id"]
+            isOneToOne: false
+            referencedRelation: "combat_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      combat_sessions: {
+        Row: {
+          campaign_id: string
+          created_at: string
+          current_turn_index: number
+          id: string
+          is_active: boolean
+          name: string
+          round_number: number
+          updated_at: string
+        }
+        Insert: {
+          campaign_id: string
+          created_at?: string
+          current_turn_index?: number
+          id?: string
+          is_active?: boolean
+          name?: string
+          round_number?: number
+          updated_at?: string
+        }
+        Update: {
+          campaign_id?: string
+          created_at?: string
+          current_turn_index?: number
+          id?: string
+          is_active?: boolean
+          name?: string
+          round_number?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "combat_sessions_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       currency: {
         Row: {
           character_id: string
