@@ -94,6 +94,7 @@ function DmDashboard({ userId, onClose }: { userId: string; onClose: () => void 
   const [notesDraft, setNotesDraft] = useState<string>("");
   const [notesSaving, setNotesSaving] = useState(false);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
+  const [view, setView] = useState<"roster" | "map">("roster");
 
   const load = useCallback(async () => {
     setLoading(true);
