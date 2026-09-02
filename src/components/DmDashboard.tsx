@@ -355,6 +355,27 @@ function DmDashboard({ userId, onClose }: { userId: string; onClose: () => void 
                   </div>
                 </div>
 
+                {/* Section tabs */}
+                <div className="flex gap-2">
+                  {([["roster", "Player Roster"], ["map", "World Map"]] as const).map(([id, label]) => (
+                    <button
+                      key={id}
+                      onClick={() => setView(id)}
+                      aria-current={view === id ? "true" : undefined}
+                      className="text-xs px-3 py-1.5 rounded-full transition"
+                      style={{
+                        background: view === id ? "rgba(255,106,0,0.18)" : "rgba(20,15,10,0.7)",
+                        border: `1px solid ${view === id ? "rgba(255,106,0,0.5)" : "rgba(255,106,0,0.18)"}`,
+                      }}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+
+                {view === "map" && <WorldMapPanel campaignId={selected.campaign.id} userId={userId} />}
+
+                {view === "roster" && (<>
                 {/* Campaign Overview */}
                 <section
                   className="rounded-2xl p-4 md:p-5"
