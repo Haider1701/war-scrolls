@@ -7,6 +7,7 @@ const db = supabase as any;
 export function SessionsTab({ characterId, readOnly }: { characterId: string; readOnly: boolean }) {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [npcs, setNpcs] = useState<NPC[]>([]);
+  const [pinSessionIds, setPinSessionIds] = useState<string[]>([]);
 
   useEffect(() => {
     (async () => {
@@ -16,6 +17,11 @@ export function SessionsTab({ characterId, readOnly }: { characterId: string; re
       ]);
       setSessions(s.data ?? []);
       setNpcs(n.data ?? []);
+      const ids = (s.data ?? []).map((x: Session) => x.id);
+      if (ids.length) {
+        const { data: pins } = await db.from("map_pins").select("session_id").in("session_id", ids);
+        setPinSessionIds(Array.from(new Set(((pins ?? []) as any[]).map((p) => p.session_id).filter(Boolean))));
+      }
     })();
   }, [characterId]);
 
@@ -53,6 +59,15 @@ export function SessionsTab({ characterId, readOnly }: { characterId: string; re
               {readOnly ? <div className="text-[var(--color-muted)] italic text-sm">{s.date_played}</div> :
                 <input className="j-input italic text-sm mt-1" placeholder="Date played" value={s.date_played} onChange={(e) => update(s, { date_played: e.target.value })} />}
             </div>
+            {pinSessionIds.includes(s.id) && (
+              <button
+                className="j-btn j-btn-ghost !py-1 !px-2 text-[11px]"
+                title="Show this session's places on the campaign map"
+                onClick={() => window.dispatchEvent(new CustomEvent("ember:view-on-map", { detail: s.id }))}
+              >
+                🗺️ View on Map
+              </button>
+            )}
             {!readOnly && <button className="text-[var(--color-blood)]" onClick={() => remove(s.id)}>✕</button>}
           </div>
 
