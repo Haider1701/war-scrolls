@@ -453,6 +453,7 @@ function DmDashboard({ userId, onClose }: { userId: string; onClose: () => void 
                     ))}
                   </div>
                 </section>
+                </>)}
               </div>
             )}
           </main>
