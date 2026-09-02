@@ -13,6 +13,7 @@ import { NotesTab } from "./tabs/NotesTab";
 import { DiceTrayTab } from "./tabs/DiceTrayTab";
 import { SettingsPanel } from "./SettingsPanel";
 import { Codex } from "./codex/Codex";
+import { PlayerMapTab } from "./map/PlayerMapTab";
 
 const TABS = [
   { id: "cover", label: "Cover" },
@@ -46,10 +47,41 @@ export function Journal({
   const [menuOpen, setMenuOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [codexOpen, setCodexOpen] = useState(false);
+  const [hasMap, setHasMap] = useState(false);
+  const [mapSessionId, setMapSessionId] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const burgerRef = useRef<HTMLButtonElement>(null);
 
 
+
+  const tabs = hasMap ? [...TABS, { id: "map", label: "Map" }] : TABS;
+
+  // Does this character's DM have an active campaign map?
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      const { data: mems } = await (supabase as any)
+        .from("campaign_members").select("campaign_id")
+        .eq("player_user_id", userId).eq("character_id", character.id);
+      const ids = (mems ?? []).map((m: any) => m.campaign_id);
+      if (ids.length === 0) { if (alive) setHasMap(false); return; }
+      const { data } = await (supabase as any)
+        .from("campaign_maps").select("id").in("campaign_id", ids).eq("is_active", true).limit(1);
+      if (alive) setHasMap((data ?? []).length > 0);
+    })();
+    return () => { alive = false; };
+  }, [userId, character.id]);
+
+  // "View on Map" from the Sessions tab
+  useEffect(() => {
+    function onView(e: Event) {
+      const id = (e as CustomEvent<string>).detail;
+      setMapSessionId(id);
+      setTab("map");
+    }
+    window.addEventListener("ember:view-on-map", onView as EventListener);
+    return () => window.removeEventListener("ember:view-on-map", onView as EventListener);
+  }, []);
 
   const players = characters.filter((c) => c.character_type === "player");
 
@@ -64,7 +96,7 @@ export function Journal({
   function go(id: string) {
     if (id === tab || pendingTab !== null) return;
     if (readOnly) {
-      const dir: FlipDir = TABS.findIndex((t) => t.id === id) > TABS.findIndex((t) => t.id === tab) ? "next" : "prev";
+      const dir: FlipDir = tabs.findIndex((t) => t.id === id) > tabs.findIndex((t) => t.id === tab) ? "next" : "prev";
       setPendingTab(id);
       setFlipDir(dir);
       window.setTimeout(() => {
@@ -78,8 +110,8 @@ export function Journal({
   }
 
   function turnRelative(delta: number) {
-    const i = TABS.findIndex((t) => t.id === tab);
-    const next = TABS[Math.max(0, Math.min(TABS.length - 1, i + delta))];
+    const i = tabs.findIndex((t) => t.id === tab);
+    const next = tabs[Math.max(0, Math.min(tabs.length - 1, i + delta))];
     if (next.id !== tab) go(next.id);
   }
 
@@ -113,10 +145,11 @@ export function Journal({
     if (id === "npcs") return <NpcsGearTab characterId={character.id} readOnly={readOnly} />;
     if (id === "notes") return <NotesTab characterId={character.id} readOnly={readOnly} />;
     if (id === "dice") return <DiceTrayTab />;
+    if (id === "map") return <PlayerMapTab userId={userId} characterId={character.id} readOnly={readOnly} highlightSessionId={mapSessionId} />;
     return null;
   }
 
-  const tabIdx = TABS.findIndex((t) => t.id === tab);
+  const tabIdx = tabs.findIndex((t) => t.id === tab);
 
   if (codexOpen) {
     return <Codex character={character} onClose={() => setCodexOpen(false)} />;
@@ -202,7 +235,7 @@ export function Journal({
           />
         )}
         <div className="max-w-6xl mx-auto px-3 md:px-4 flex gap-1 overflow-x-auto scrollbar-thin">
-          {TABS.map((t) => (
+          {tabs.map((t) => (
             <button key={t.id} className={`j-tab ${tab === t.id ? "active" : ""}`} onClick={() => go(t.id)}>
               {t.label}
             </button>
@@ -241,7 +274,7 @@ export function Journal({
               >‹</button>
               <button
                 aria-label="Next page"
-                disabled={tabIdx === TABS.length - 1 || pendingTab !== null}
+                disabled={tabIdx === tabs.length - 1 || pendingTab !== null}
                 onClick={() => turnRelative(1)}
                 className="j-page-arrow j-page-arrow-r"
               >›</button>
