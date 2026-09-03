@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PIN_TYPES, type CampaignMap, type MapPin } from "@/lib/mapTypes";
-import { deleteMap, listMaps, listPins, resolveMapUrl, setActiveMap, uploadMap } from "@/lib/mapApi";
+import { deleteMap, listMaps, listPins, renameMap, resolveMapUrl, setActiveMap, uploadMap } from "@/lib/mapApi";
 import { MapCanvas } from "./MapCanvas";
 import { PinEditor, type SessionOption } from "./PinEditor";
 
@@ -11,13 +11,16 @@ const db = supabase as any;
 export function WorldMapPanel({ campaignId, userId }: { campaignId: string; userId: string }) {
   const [maps, setMaps] = useState<CampaignMap[]>([]);
   const [mapId, setMapId] = useState<string | null>(null);
-  const [url, setUrl] = useState<string>("");
+  const [urls, setUrls] = useState<Record<string, string>>({});
   const [pins, setPins] = useState<MapPin[]>([]);
   const [sessions, setSessions] = useState<SessionOption[]>([]);
   const [names, setNames] = useState<Record<string, string>>({});
   const [editing, setEditing] = useState<Partial<MapPin> | null>(null);
   const [fresh, setFresh] = useState<string[]>([]);
-  const [busy, setBusy] = useState(false);
+  const [progress, setProgress] = useState<number | null>(null);
+  const [dragOver, setDragOver] = useState(false);
+  const [renaming, setRenaming] = useState<string | null>(null);
+  const [renameDraft, setRenameDraft] = useState("");
   const [err, setErr] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
 
@@ -27,16 +30,11 @@ export function WorldMapPanel({ campaignId, userId }: { campaignId: string; user
     const list = await listMaps(campaignId);
     setMaps(list);
     setMapId((prev) => (prev && list.some((m) => m.id === prev) ? prev : (list.find((m) => m.is_active) ?? list[0])?.id ?? null));
+    const entries = await Promise.all(list.map(async (m) => [m.id, await resolveMapUrl(m)] as const));
+    setUrls(Object.fromEntries(entries));
   }, [campaignId]);
 
   useEffect(() => { loadMaps(); }, [loadMaps]);
-
-  useEffect(() => {
-    if (!active) { setUrl(""); return; }
-    let alive = true;
-    resolveMapUrl(active).then((u) => { if (alive) setUrl(u); });
-    return () => { alive = false; };
-  }, [active?.id, active?.storage_path]);
 
   const loadPins = useCallback(async () => {
     if (!mapId) { setPins([]); return; }
@@ -79,104 +77,154 @@ export function WorldMapPanel({ campaignId, userId }: { campaignId: string; user
   }
 
   async function onUpload(file: File) {
-    setBusy(true); setErr(null);
-    const name = window.prompt("Map name", file.name.replace(/\.[^.]+$/, "")) ?? "";
-    const res = await uploadMap(campaignId, file, name);
-    setBusy(false);
+    setErr(null);
+    setProgress(8);
+    const tick = window.setInterval(() => setProgress((p) => (p === null ? p : Math.min(92, p + 7))), 180);
+    const res = await uploadMap(campaignId, file, file.name.replace(/\.[^.]+$/, ""));
+    window.clearInterval(tick);
+    setProgress(100);
+    window.setTimeout(() => setProgress(null), 500);
     if (res.error) { setErr(res.error); return; }
     if (res.map) {
+      const first = maps.length === 0;
+      if (first) await setActiveMap(campaignId, res.map.id);
       await loadMaps();
       setMapId(res.map.id);
-      if (maps.length === 0) await setActiveMap(campaignId, res.map.id).then(loadMaps);
     }
   }
 
   return (
-    <section className="space-y-3">
-      <div className="flex flex-wrap items-center gap-2">
-        <div className="text-[10px] uppercase tracking-widest text-[var(--color-muted)] mr-1">World Maps</div>
-        {maps.map((m) => (
-          <button
-            key={m.id}
-            onClick={() => setMapId(m.id)}
-            className="text-xs px-2.5 py-1 rounded-full transition"
-            style={{
-              background: m.id === mapId ? "rgba(255,106,0,0.18)" : "rgba(20,15,10,0.7)",
-              border: `1px solid ${m.id === mapId ? "rgba(255,106,0,0.5)" : "rgba(255,106,0,0.18)"}`,
-            }}
-          >
-            {m.is_active ? "★ " : ""}{m.name}
-          </button>
-        ))}
-        <input
-          ref={fileRef}
-          type="file"
-          accept="image/png,image/jpeg,image/webp"
-          className="hidden"
-          onChange={(e) => { const f = e.target.files?.[0]; if (f) onUpload(f); e.currentTarget.value = ""; }}
-        />
-        <button className="j-btn j-btn-ghost !py-1 !px-3 text-xs" disabled={busy} onClick={() => fileRef.current?.click()}>
-          {busy ? "Uploading…" : "+ Upload Map"}
-        </button>
+    <section className="space-y-4">
+      {/* Upload drop zone */}
+      <input
+        ref={fileRef}
+        type="file"
+        accept="image/png,image/jpeg,image/webp"
+        className="hidden"
+        onChange={(e) => { const f = e.target.files?.[0]; if (f) onUpload(f); e.currentTarget.value = ""; }}
+      />
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={() => fileRef.current?.click()}
+        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") fileRef.current?.click(); }}
+        onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+        onDragLeave={() => setDragOver(false)}
+        onDrop={(e) => {
+          e.preventDefault(); setDragOver(false);
+          const f = e.dataTransfer.files?.[0];
+          if (f) onUpload(f);
+        }}
+        className="w-full rounded-xl px-6 py-7 text-center transition cursor-pointer"
+        style={{
+          background: dragOver ? "rgba(255,106,0,0.12)" : "rgba(12,9,6,0.55)",
+          border: `2px dashed ${dragOver ? "rgba(255,106,0,0.7)" : "rgba(255,106,0,0.3)"}`,
+        }}
+      >
+        <div className="text-3xl">🗺️</div>
+        <div className="j-glow-text text-lg mt-1" style={{ fontFamily: "var(--font-uncial)" }}>Drop your map here</div>
+        <div className="text-xs text-[var(--color-muted)] mt-0.5">or click to browse</div>
+        <div className="text-[10px] text-[var(--color-muted)] mt-1">JPG, PNG or WEBP · max 10 MB</div>
+        {progress !== null && (
+          <div className="mt-3 h-1.5 w-full rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.08)" }}>
+            <div
+              className="h-full transition-all"
+              style={{ width: `${progress}%`, background: "linear-gradient(90deg, #ff6a00, #ffb347)" }}
+            />
+          </div>
+        )}
       </div>
       {err && <div className="text-xs" style={{ color: "var(--color-blood)" }}>{err}</div>}
 
-      {!active && (
-        <div className="rounded-xl p-6 text-center text-xs italic text-[var(--color-muted)]"
-          style={{ background: "rgba(20,15,10,0.5)", border: "1px dashed rgba(255,106,0,0.2)" }}>
-          No maps yet. Upload a world, city or dungeon map (JPG/PNG, max 10 MB).
+      {/* Map thumbnails */}
+      {maps.length > 0 && (
+        <div className="flex gap-3 overflow-x-auto pb-1">
+          {maps.map((m) => {
+            const sel = m.id === mapId;
+            return (
+              <div
+                key={m.id}
+                className="shrink-0 w-48 rounded-xl overflow-hidden"
+                style={{
+                  background: "rgba(14,10,7,0.8)",
+                  border: `1px solid ${m.is_active ? "rgba(255,106,0,0.65)" : sel ? "rgba(255,106,0,0.4)" : "rgba(255,106,0,0.16)"}`,
+                  boxShadow: m.is_active ? "0 0 16px -4px var(--color-ember)" : undefined,
+                }}
+              >
+                <button className="block w-full" onClick={() => setMapId(m.id)} aria-label={`Open map ${m.name}`}>
+                  {urls[m.id] ? (
+                    <img src={urls[m.id]} alt="" className="w-full h-24 object-cover" />
+                  ) : (
+                    <div className="w-full h-24 flex items-center justify-center text-2xl">🗺️</div>
+                  )}
+                </button>
+                <div className="p-2 space-y-1.5">
+                  {renaming === m.id ? (
+                    <input
+                      autoFocus
+                      className="w-full rounded-lg px-2 py-1 text-xs"
+                      style={{ background: "rgba(8,6,4,0.7)", border: "1px solid rgba(255,106,0,0.3)", color: "var(--color-ink)" }}
+                      value={renameDraft}
+                      onChange={(e) => setRenameDraft(e.target.value)}
+                      onBlur={async () => { await renameMap(m.id, renameDraft || m.name); setRenaming(null); loadMaps(); }}
+                      onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }}
+                    />
+                  ) : (
+                    <div className="flex items-center gap-1.5">
+                      <div className="text-xs truncate flex-1">{m.name}</div>
+                      {m.is_active && (
+                        <span className="text-[9px] px-1.5 py-0.5 rounded-full shrink-0"
+                          style={{ background: "rgba(50,200,120,0.15)", border: "1px solid rgba(50,200,120,0.35)", color: "rgb(120,220,160)" }}>
+                          Active
+                        </span>
+                      )}
+                    </div>
+                  )}
+                  <div className="flex gap-1">
+                    {!m.is_active && (
+                      <button className="j-btn j-btn-ghost !py-0.5 !px-2 text-[10px]"
+                        onClick={async () => { await setActiveMap(campaignId, m.id); loadMaps(); }}>
+                        Set Active
+                      </button>
+                    )}
+                    <button className="j-btn j-btn-ghost !py-0.5 !px-2 text-[10px]"
+                      onClick={() => { setRenaming(m.id); setRenameDraft(m.name); }}>
+                      ✏️ Rename
+                    </button>
+                    <button
+                      className="j-btn j-btn-ghost !py-0.5 !px-2 text-[10px]"
+                      style={{ color: "var(--color-blood)" }}
+                      onClick={async () => {
+                        if (!window.confirm(`Delete map "${m.name}" and its pins?`)) return;
+                        await deleteMap(m);
+                        setMapId(null);
+                        loadMaps();
+                      }}
+                    >
+                      🗑️ Delete
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
 
-      {active && (
-        <>
-          <div className="flex flex-wrap items-center gap-2 text-xs">
-            <label className="flex items-center gap-1.5">
-              <input
-                type="checkbox"
-                checked={active.is_active}
-                onChange={async () => {
-                  if (active.is_active) {
-                    await db.from("campaign_maps").update({ is_active: false }).eq("id", active.id);
-                  } else {
-                    await setActiveMap(campaignId, active.id);
-                  }
-                  loadMaps();
-                }}
-              />
-              Active for players
-            </label>
-            <span className="text-[var(--color-muted)]">· Click the map to place a pin</span>
-            <div className="flex-1" />
-            <button
-              className="j-btn j-btn-ghost !py-1 !px-3 text-xs"
-              style={{ color: "var(--color-blood)" }}
-              onClick={async () => {
-                if (!window.confirm(`Delete map "${active.name}" and its pins?`)) return;
-                await deleteMap(active);
-                setMapId(null);
-                loadMaps();
-              }}
-            >
-              Delete Map
-            </button>
-          </div>
-
-          <div className="h-[60vh] min-h-[320px]">
-            {url && (
-              <MapCanvas
-                imageUrl={url}
-                pins={pins}
-                dmView
-                canPlace
-                freshIds={fresh}
-                attributionFor={(p) => (p.placed_by === "player" && p.character_id ? names[p.character_id] : undefined)}
-                onPlace={(x, y) => setEditing({ x_percent: x, y_percent: y, is_visible_to_players: true })}
-                onPinClick={(p) => setEditing(p)}
-              />
-            )}
-          </div>
-        </>
+      {active && urls[active.id] && (
+        <div className="h-[70vh] min-h-[520px]">
+          <MapCanvas
+            imageUrl={urls[active.id]}
+            pins={pins}
+            dmView
+            allowPinTool
+            freshIds={fresh}
+            attributionFor={(p) => (p.placed_by === "player" && p.character_id ? names[p.character_id] : undefined)}
+            onRetry={loadMaps}
+            onPlace={(x, y) => setEditing({ x_percent: x, y_percent: y, is_visible_to_players: true })}
+            onPinClick={(p) => setEditing(p)}
+          />
+        </div>
       )}
 
       {editing && active && (
@@ -187,6 +235,7 @@ export function WorldMapPanel({ campaignId, userId }: { campaignId: string; user
           canToggleVisibility
           canEdit
           canDelete={!!editing.id}
+          attribution={editing.placed_by === "player" && editing.character_id ? names[editing.character_id] : undefined}
           onClose={() => setEditing(null)}
           onSave={async (d) => {
             if (editing.id) {
