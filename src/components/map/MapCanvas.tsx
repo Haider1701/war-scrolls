@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { PIN_META, type MapPin } from "@/lib/mapTypes";
 
-const MIN_ZOOM = 0.4;
+const MIN_ZOOM = 0.3;
 const MAX_ZOOM = 6;
 
 type Props = {
@@ -9,8 +9,8 @@ type Props = {
   pins: MapPin[];
   /** Renders lock overlays on DM-only pins. */
   dmView?: boolean;
-  /** Clicking empty map space places a pin. */
-  canPlace?: boolean;
+  /** Enables the 📍 Pin tool in the toolbar. */
+  allowPinTool?: boolean;
   onPlace?: (xPercent: number, yPercent: number) => void;
   onPinClick?: (pin: MapPin) => void;
   /** Pins added within the last few seconds — pulse. */
@@ -18,23 +18,31 @@ type Props = {
   /** Pins to spotlight (e.g. from a session link). */
   highlightIds?: string[];
   attributionFor?: (pin: MapPin) => string | undefined;
+  onRetry?: () => void;
 };
 
 const clamp = (n: number, a: number, b: number) => Math.max(a, Math.min(b, n));
 
-/** Pannable / zoomable map surface with percentage-positioned pins. */
+/** Pannable / zoomable battle-map surface with percentage-positioned pins. */
 export function MapCanvas({
-  imageUrl, pins, dmView, canPlace, onPlace, onPinClick, freshIds = [], highlightIds = [], attributionFor,
+  imageUrl, pins, dmView, allowPinTool, onPlace, onPinClick,
+  freshIds = [], highlightIds = [], attributionFor, onRetry,
 }: Props) {
+  const frameRef = useRef<HTMLDivElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [zoom, setZoom] = useState(1);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [hover, setHover] = useState<string | null>(null);
+  const [tool, setTool] = useState<"select" | "pin">("select");
+  const [failed, setFailed] = useState(false);
+  const [ready, setReady] = useState(false);
   const stateRef = useRef({ zoom, offset });
   stateRef.current = { zoom, offset };
   const dragRef = useRef<{ id: number; x: number; y: number; moved: boolean } | null>(null);
   const pinchRef = useRef<Map<number, { x: number; y: number }>>(new Map());
   const pinchStart = useRef<{ dist: number; zoom: number; cx: number; cy: number } | null>(null);
+
+  const placing = !!allowPinTool && tool === "pin";
 
   const zoomAt = useCallback((next: number, px: number, py: number) => {
     const { zoom: z, offset: o } = stateRef.current;
@@ -44,31 +52,23 @@ export function MapCanvas({
     setOffset({ x: px - (px - o.x) * k, y: py - (py - o.y) * k });
   }, []);
 
-  const wheelRef = useRef((e: WheelEvent) => {
-    const el = containerRef.current;
-    if (!el) return;
-    const rect = el.getBoundingClientRect();
-    const dy = e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? 100 : 1);
-    zoomAt(stateRef.current.zoom * Math.exp(-dy * 0.0018), e.clientX - rect.left, e.clientY - rect.top);
-  });
-  wheelRef.current = (e: WheelEvent) => {
-    const el = containerRef.current;
-    if (!el) return;
-    const rect = el.getBoundingClientRect();
-    const dy = e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? 100 : 1);
-    zoomAt(stateRef.current.zoom * Math.exp(-dy * 0.0018), e.clientX - rect.left, e.clientY - rect.top);
-  };
-
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
-    const onWheel = (e: WheelEvent) => { e.preventDefault(); wheelRef.current(e); };
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      const rect = el.getBoundingClientRect();
+      const dy = e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? 100 : 1);
+      zoomAt(stateRef.current.zoom * Math.exp(-dy * 0.0018), e.clientX - rect.left, e.clientY - rect.top);
+    };
     el.addEventListener("wheel", onWheel, { passive: false });
     return () => el.removeEventListener("wheel", onWheel);
-  }, []);
+  }, [zoomAt]);
 
-  // Reset view when the map image changes
-  useLayoutEffect(() => { setZoom(1); setOffset({ x: 0, y: 0 }); }, [imageUrl]);
+  // Reset when the map image changes
+  useLayoutEffect(() => {
+    setZoom(1); setOffset({ x: 0, y: 0 }); setFailed(false); setReady(false);
+  }, [imageUrl]);
 
   function onPointerDown(e: React.PointerEvent) {
     pinchRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
@@ -116,9 +116,8 @@ export function MapCanvas({
   }
 
   function onSurfaceClick(e: React.MouseEvent) {
-    if (!canPlace || !onPlace) return;
-    const target = e.currentTarget as HTMLElement;
-    const rect = target.getBoundingClientRect();
+    if (!placing || !onPlace) return;
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
     const x = ((e.clientX - rect.left) / rect.width) * 100;
     const y = ((e.clientY - rect.top) / rect.height) * 100;
     onPlace(clamp(x, 0, 100), clamp(y, 0, 100));
@@ -130,71 +129,139 @@ export function MapCanvas({
     zoomAt(stateRef.current.zoom * f, el.clientWidth / 2, el.clientHeight / 2);
   };
 
+  const reset = () => { setZoom(1); setOffset({ x: 0, y: 0 }); };
+
+  const toggleFullscreen = () => {
+    const el = frameRef.current;
+    if (!el) return;
+    if (document.fullscreenElement) document.exitFullscreen();
+    else el.requestFullscreen?.();
+  };
+
   return (
-    <div className="relative w-full h-full overflow-hidden rounded-2xl j-map-frame">
-      <div
-        ref={containerRef}
-        className="absolute inset-0 touch-none select-none"
-        style={{ cursor: canPlace ? "crosshair" : "grab" }}
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={onPointerUp}
-        onPointerCancel={onPointerUp}
-      >
-        <div
-          style={{
-            transform: `translate(${offset.x}px, ${offset.y}px) scale(${zoom})`,
-            transformOrigin: "0 0",
-            width: "100%",
-            position: "relative",
-          }}
-        >
-          <div className="relative" onClick={onSurfaceClick}>
-            <img src={imageUrl} alt="Campaign map" className="block w-full h-auto pointer-events-none" draggable={false} />
-            {pins.map((p) => {
-              const meta = PIN_META[p.pin_type] ?? PIN_META.poi;
-              const fresh = freshIds.includes(p.id);
-              const spot = highlightIds.includes(p.id);
-              return (
-                <button
-                  key={p.id}
-                  type="button"
-                  className={`j-map-pin ${fresh ? "j-map-pin-fresh" : ""} ${spot ? "j-map-pin-spot" : ""}`}
-                  style={{
-                    left: `${p.x_percent}%`,
-                    top: `${p.y_percent}%`,
-                    transform: `translate(-50%, -100%) scale(${1 / zoom})`,
-                    ["--pin-color" as any]: meta.color,
-                  }}
-                  onClick={(e) => { e.stopPropagation(); onPinClick?.(p); }}
-                  onMouseEnter={() => setHover(p.id)}
-                  onMouseLeave={() => setHover((h) => (h === p.id ? null : h))}
-                  aria-label={`${meta.label}: ${p.label || "unnamed"}`}
-                >
-                  <span className="j-map-pin-dot">
-                    <span aria-hidden>{meta.emoji}</span>
-                    {dmView && !p.is_visible_to_players && <span className="j-map-pin-lock" aria-hidden>🔒</span>}
-                  </span>
-                  {(hover === p.id || spot) && (
-                    <span className="j-map-tip">
-                      {p.label || meta.label}
-                      {attributionFor?.(p) && <em className="block opacity-75">— {attributionFor(p)}</em>}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
+    <div ref={frameRef} className="flex flex-col h-full gap-2">
+      {/* Toolbar */}
+      <div className="flex items-center gap-2 flex-wrap">
+        {allowPinTool && (
+          <div className="flex gap-1.5">
+            <button
+              className={`j-map-tool ${tool === "select" ? "is-active" : ""}`}
+              onClick={() => setTool("select")}
+              aria-pressed={tool === "select"}
+            >🖱️ Select</button>
+            <button
+              className={`j-map-tool ${tool === "pin" ? "is-active" : ""}`}
+              onClick={() => setTool("pin")}
+              aria-pressed={tool === "pin"}
+            >📍 Pin</button>
           </div>
+        )}
+        <div className="flex-1" />
+        <div className="flex gap-1.5">
+          <button className="j-map-tool" onClick={() => step(1.3)} aria-label="Zoom in">＋ Zoom In</button>
+          <button className="j-map-tool" onClick={() => step(1 / 1.3)} aria-label="Zoom out">－ Zoom Out</button>
+          <button className="j-map-tool" onClick={reset}>⊙ Reset</button>
+          <button className="j-map-tool" onClick={toggleFullscreen}>⛶ Fullscreen</button>
         </div>
       </div>
 
-      <div className="absolute bottom-3 right-3 flex flex-col gap-1 z-10">
-        <button className="j-map-ctl" onClick={() => step(1.3)} aria-label="Zoom in">+</button>
-        <button className="j-map-ctl" onClick={() => step(1 / 1.3)} aria-label="Zoom out">−</button>
-        <button className="j-map-ctl text-[10px]" onClick={() => { setZoom(1); setOffset({ x: 0, y: 0 }); }} aria-label="Reset view">⤾</button>
-      </div>
-      <div className="absolute bottom-3 left-3 text-[10px] text-[var(--color-muted)] bg-[rgba(8,5,2,0.6)] px-2 py-0.5 rounded-full z-10">
-        {Math.round(zoom * 100)}%
+      {/* Map surface */}
+      <div className="relative flex-1 min-h-[420px] overflow-hidden rounded-xl j-map-frame">
+        <div className="j-map-grid" aria-hidden />
+        <div className="j-map-vignette" aria-hidden />
+
+        {failed ? (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-center px-6">
+            <div className="text-3xl">🗺️</div>
+            <div className="text-sm text-[var(--color-muted)] italic">This map image could not be loaded.</div>
+            <button className="j-btn !py-1 !px-3 text-xs" onClick={() => { setFailed(false); onRetry?.(); }}>
+              ⟳ Retry
+            </button>
+          </div>
+        ) : (
+          <div
+            ref={containerRef}
+            className="absolute inset-0 touch-none select-none"
+            style={{ cursor: placing ? "crosshair" : "grab" }}
+            onPointerDown={onPointerDown}
+            onPointerMove={onPointerMove}
+            onPointerUp={onPointerUp}
+            onPointerCancel={onPointerUp}
+          >
+            <div
+              style={{
+                transform: `translate(${offset.x}px, ${offset.y}px) scale(${zoom})`,
+                transformOrigin: "0 0",
+                width: "100%",
+                position: "relative",
+              }}
+            >
+              <div className="relative" onClick={onSurfaceClick}>
+                <img
+                  src={imageUrl}
+                  alt="Campaign map"
+                  className="block w-full h-auto pointer-events-none rounded-lg"
+                  draggable={false}
+                  onLoad={() => setReady(true)}
+                  onError={() => setFailed(true)}
+                />
+                {pins.map((p) => {
+                  const meta = PIN_META[p.pin_type] ?? PIN_META.poi;
+                  const fresh = freshIds.includes(p.id);
+                  const spot = highlightIds.includes(p.id);
+                  const hidden = dmView && !p.is_visible_to_players;
+                  return (
+                    <button
+                      key={p.id}
+                      type="button"
+                      className={`j-map-pin ${fresh ? "j-map-pin-fresh" : ""} ${spot ? "j-map-pin-spot" : ""}`}
+                      style={{
+                        left: `${p.x_percent}%`,
+                        top: `${p.y_percent}%`,
+                        transform: `translate(-50%, -100%) scale(${1 / zoom})`,
+                        opacity: hidden ? 0.72 : 1,
+                        filter: hidden ? "saturate(0.5)" : undefined,
+                        ["--pin-color" as any]: meta.color,
+                      }}
+                      onClick={(e) => { e.stopPropagation(); onPinClick?.(p); }}
+                      onMouseEnter={() => setHover(p.id)}
+                      onMouseLeave={() => setHover((h) => (h === p.id ? null : h))}
+                      aria-label={`${meta.label}: ${p.label || "unnamed"}`}
+                    >
+                      <span className="j-map-pin-dot">
+                        <span aria-hidden>{meta.emoji}</span>
+                        {hidden && <span className="j-map-pin-lock" aria-hidden>🔒</span>}
+                      </span>
+                      {(hover === p.id || spot) && (
+                        <span className="j-map-tip">
+                          {p.label || meta.label}
+                          {attributionFor?.(p) && <em className="block opacity-75">— {attributionFor(p)}</em>}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {!failed && !ready && (
+          <div className="absolute inset-0 flex items-center justify-center text-xs italic text-[var(--color-muted)]">
+            Unrolling the map…
+          </div>
+        )}
+
+        <div className="absolute bottom-3 right-3 text-[10px] px-2 py-0.5 rounded-full z-10"
+          style={{ background: "rgba(8,5,2,0.75)", border: "1px solid rgba(255,106,0,0.3)" }}>
+          {Math.round(zoom * 100)}%
+        </div>
+        {placing && (
+          <div className="absolute top-3 left-3 text-[10px] px-2 py-0.5 rounded-full z-10"
+            style={{ background: "rgba(255,106,0,0.2)", border: "1px solid rgba(255,106,0,0.5)" }}>
+            📍 Click the map to place a pin
+          </div>
+        )}
       </div>
     </div>
   );
