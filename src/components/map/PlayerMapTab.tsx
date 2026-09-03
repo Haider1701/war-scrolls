@@ -98,14 +98,15 @@ export function PlayerMapTab({
           {readOnly ? "Reading mode" : "Click the map to mark a place you’ve visited."}
         </span>
       </div>
-      <div className="h-[60vh] min-h-[300px]">
+      <div className="h-[68vh] min-h-[480px]">
         {url && (
           <MapCanvas
             imageUrl={url}
             pins={pins}
-            canPlace={!readOnly}
+            allowPinTool={!readOnly}
             freshIds={fresh}
             highlightIds={highlightIds}
+            onRetry={loadMap}
             onPlace={(x, y) => setEditing({ x_percent: x, y_percent: y })}
             onPinClick={(p) => setEditing(p)}
           />

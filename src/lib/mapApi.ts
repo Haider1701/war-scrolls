@@ -30,6 +30,10 @@ export async function listPins(mapId: string): Promise<MapPin[]> {
   return (data ?? []) as MapPin[];
 }
 
+export async function renameMap(mapId: string, name: string) {
+  await db.from("campaign_maps").update({ name: name.trim() || "Untitled Map" }).eq("id", mapId);
+}
+
 export async function setActiveMap(campaignId: string, mapId: string) {
   await db.from("campaign_maps").update({ is_active: false }).eq("campaign_id", campaignId);
   await db.from("campaign_maps").update({ is_active: true }).eq("id", mapId);
