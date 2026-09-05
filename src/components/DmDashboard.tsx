@@ -7,6 +7,7 @@ import type {
 import { abilityMod, fmtMod, formatMulticlass, totalLevel } from "@/lib/types";
 import { DmSheetView } from "./DmSheetView";
 import { WorldMapPanel } from "./map/WorldMapPanel";
+import { CombatTracker } from "./combat/CombatTracker";
 
 const db = supabase as any;
 
@@ -95,7 +96,8 @@ function DmDashboard({ userId, onClose }: { userId: string; onClose: () => void 
   const [notesDraft, setNotesDraft] = useState<string>("");
   const [notesSaving, setNotesSaving] = useState(false);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
-  const [view, setView] = useState<"roster" | "map">("roster");
+  const [view, setView] = useState<"roster" | "map" | "journal" | "combat" | "settings">("roster");
+  const [activeCombat, setActiveCombat] = useState<Record<string, boolean>>({});
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -108,11 +110,12 @@ function DmDashboard({ userId, onClose }: { userId: string; onClose: () => void 
     const playerIds = Array.from(new Set(memList.map((m) => m.player_user_id)));
     const characterIds = memList.map((m) => m.character_id).filter(Boolean) as string[];
 
-    const [profRes, charRes, sessRes, notifRes] = await Promise.all([
+    const [profRes, charRes, sessRes, notifRes, combatRes] = await Promise.all([
       playerIds.length ? db.from("user_profiles").select("user_id,display_name").in("user_id", playerIds) : Promise.resolve({ data: [] }),
       characterIds.length ? db.from("characters").select("*").in("id", characterIds) : Promise.resolve({ data: [] }),
       characterIds.length ? db.from("sessions").select("id,character_id").in("character_id", characterIds) : Promise.resolve({ data: [] }),
       db.from("gm_notifications").select("id,from_character_id,is_read").eq("gm_user_id", userId).eq("is_read", false),
+      db.from("combat_sessions").select("campaign_id").in("campaign_id", campaignIds).eq("is_active", true),
     ]);
     const nameMap = new Map<string, string>((profRes.data ?? []).map((p: any) => [p.user_id, p.display_name]));
     const charMap = new Map<string, Character>((charRes.data ?? []).map((c: any) => [c.id, c as Character]));
@@ -148,6 +151,7 @@ function DmDashboard({ userId, onClose }: { userId: string; onClose: () => void 
     });
 
     setRows(out);
+    setActiveCombat(Object.fromEntries((combatRes.data ?? []).map((c: any) => [c.campaign_id, true])));
     setSelectedCampaignId((prev) => prev && out.some((r) => r.campaign.id === prev) ? prev : out[0]?.campaign.id ?? null);
     setLoading(false);
   }, [userId]);
@@ -206,6 +210,23 @@ function DmDashboard({ userId, onClose }: { userId: string; onClose: () => void 
     } catch { /* noop */ }
   };
 
+  async function createCampaign() {
+    const name = window.prompt("Name your new campaign");
+    if (!name?.trim()) return;
+    const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    const code = Array.from({ length: 6 }, () => alphabet[Math.floor(Math.random() * alphabet.length)]).join("");
+    await db.from("campaigns").insert({ dm_user_id: userId, name: name.trim(), join_code: code });
+    load();
+  }
+
+  async function regenerateCode() {
+    if (!selected) return;
+    const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    const code = Array.from({ length: 6 }, () => alphabet[Math.floor(Math.random() * alphabet.length)]).join("");
+    await db.from("campaigns").update({ join_code: code }).eq("id", selected.campaign.id);
+    load();
+  }
+
   return (
     <>
       {/* Full-screen DM mode — darker, more authoritative palette */}
@@ -251,10 +272,11 @@ function DmDashboard({ userId, onClose }: { userId: string; onClose: () => void 
           >
             <div className="p-3">
               <div className="text-[10px] uppercase tracking-widest text-[var(--color-muted)] px-2 mb-2">Campaigns</div>
+              <button className="j-btn w-full mb-3" onClick={createCampaign}>＋ New Campaign</button>
               {loading && <div className="text-[var(--color-muted)] italic text-sm px-2">Gathering scrolls…</div>}
               {!loading && rows.length === 0 && (
                 <div className="text-xs italic text-[var(--color-muted)] px-2 py-4 leading-relaxed">
-                  No campaigns yet. Create one from Settings → Campaigns to invite players.
+                  No campaigns yet. Create your first realm and invite the party.
                 </div>
               )}
               <div className="space-y-2">
@@ -319,8 +341,10 @@ function DmDashboard({ userId, onClose }: { userId: string; onClose: () => void 
           {/* Main area */}
           <main className="flex-1 overflow-y-auto">
             {!selected && !loading && (
-              <div className="p-6 text-center text-[var(--color-muted)] italic mt-12">
-                Select a campaign from the left to begin.
+              <div className="p-6 text-center mt-20">
+                <div className="text-6xl mb-4">⚔️</div>
+                <h2 className="j-h text-2xl">Select a campaign or create your first one</h2>
+                <button className="j-btn mt-5" onClick={createCampaign}>Create Campaign</button>
               </div>
             )}
             {selected && (
@@ -334,15 +358,14 @@ function DmDashboard({ userId, onClose }: { userId: string; onClose: () => void 
                 </button>
 
                 {/* Campaign header */}
-                <div>
-                  <div className="text-[10px] uppercase tracking-widest text-[var(--color-muted)]">Campaign</div>
-                  <h1 className="j-glow-text text-2xl md:text-3xl" style={{ fontFamily: "var(--font-uncial)" }}>
-                    {selected.campaign.name}
-                  </h1>
+                 <div className="flex items-start gap-3 flex-wrap">
+                   <div className="min-w-0 flex-1">
+                   <div className="text-[10px] uppercase tracking-widest text-[var(--color-muted)]">Campaign</div>
+                   <div className="flex items-center gap-2"><h1 className="j-glow-text text-2xl md:text-3xl" style={{ fontFamily: "var(--font-uncial)" }}>{selected.campaign.name}</h1><span className="text-[9px] uppercase rounded-full px-2 py-1 border border-[rgba(50,200,120,.35)] text-[rgb(120,220,160)]">● Active</span></div>
                   {selected.campaign.description && (
                     <p className="text-sm text-[var(--color-muted)] italic mt-1">{selected.campaign.description}</p>
                   )}
-                  <div className="flex items-center gap-2 mt-2 text-xs text-[var(--color-muted)]">
+                   <div className="flex items-center gap-2 mt-2 text-xs text-[var(--color-muted)] flex-wrap">
                     <span>Join code:</span>
                     <code className="tracking-widest text-[var(--color-ink)] px-2 py-0.5 rounded" style={{ background: "rgba(255,106,0,0.08)" }}>
                       {selected.campaign.join_code}
@@ -353,21 +376,20 @@ function DmDashboard({ userId, onClose }: { userId: string; onClose: () => void 
                     >
                       {copiedCode === selected.campaign.join_code ? "✓ Copied" : "📋 Copy"}
                     </button>
+                     <button className="j-btn j-btn-ghost !py-0.5 !px-2 text-[10px]" onClick={() => copyCode(`${window.location.origin}/?join=${selected.campaign.join_code}`)}>🔗 Invite Link</button>
+                     <button className="j-btn j-btn-ghost !py-0.5 !px-2 text-[10px]" onClick={regenerateCode}>⟳ Regenerate</button>
                   </div>
+                   </div>
                 </div>
 
                 {/* Section tabs */}
-                <div className="flex gap-2">
-                  {([["roster", "Player Roster"], ["map", "World Map"]] as const).map(([id, label]) => (
+                 <div className="flex gap-1 overflow-x-auto border-b border-[rgba(255,106,0,.2)]">
+                   {([["roster", "👥 Player Roster"], ["map", "🗺️ World Map"], ["journal", "📖 Campaign Journal"], ["combat", "⚔️ Combat"], ["settings", "⚙️ Settings"]] as const).map(([id, label]) => (
                     <button
                       key={id}
                       onClick={() => setView(id)}
                       aria-current={view === id ? "true" : undefined}
-                      className="text-xs px-3 py-1.5 rounded-full transition"
-                      style={{
-                        background: view === id ? "rgba(255,106,0,0.18)" : "rgba(20,15,10,0.7)",
-                        border: `1px solid ${view === id ? "rgba(255,106,0,0.5)" : "rgba(255,106,0,0.18)"}`,
-                      }}
+                       className={`j-tab ${view === id ? "active" : ""}`}
                     >
                       {label}
                     </button>
@@ -375,6 +397,9 @@ function DmDashboard({ userId, onClose }: { userId: string; onClose: () => void 
                 </div>
 
                 {view === "map" && <WorldMapPanel campaignId={selected.campaign.id} userId={userId} />}
+                 {view === "combat" && <CombatTracker campaignId={selected.campaign.id} members={selected.members} />}
+                 {view === "journal" && <section className="j-card"><h3 className="j-h text-lg">Campaign Journal</h3><p className="text-sm text-[var(--color-muted)] mt-1">Shared chronicles and approved lore will appear here.</p></section>}
+                 {view === "settings" && <section className="j-card space-y-2"><h3 className="j-h text-lg">Campaign Settings</h3><label className="text-[10px] uppercase text-[var(--color-muted)]">Private DM notes</label><textarea value={notesDraft} onChange={(e) => setNotesDraft(e.target.value)} onBlur={saveNotes} rows={8} className="j-input w-full" /><div className="text-[10px] text-[var(--color-muted)]">{notesSaving ? "Saving…" : "Saved when you click away."}</div></section>}
 
                 {view === "roster" && (<>
                 {/* Campaign Overview */}
@@ -387,7 +412,7 @@ function DmDashboard({ userId, onClose }: { userId: string; onClose: () => void 
                   }}
                 >
                   <div className="text-[10px] uppercase tracking-widest text-[var(--color-muted)] mb-3">Campaign Overview</div>
-                  <div className="grid grid-cols-3 gap-2 md:gap-3">
+                   <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
                     <StatBubble label="Players" value={selected.members.length} icon="👥" />
                     <StatBubble label="Sessions" value={selected.sessionCount} icon="📜" />
                     <StatBubble
@@ -396,6 +421,7 @@ function DmDashboard({ userId, onClose }: { userId: string; onClose: () => void 
                       icon="⏳"
                       accent={selected.pendingHomebrew > 0}
                     />
+                     <StatBubble label="Combat" value={activeCombat[selected.campaign.id] ? 1 : 0} icon="⚔️" accent={activeCombat[selected.campaign.id]} />
                   </div>
                   <div className="mt-4">
                     <label className="text-[10px] uppercase tracking-widest text-[var(--color-muted)] block mb-1">

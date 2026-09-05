@@ -14,6 +14,7 @@ import { DiceTrayTab } from "./tabs/DiceTrayTab";
 import { SettingsPanel } from "./SettingsPanel";
 import { Codex } from "./codex/Codex";
 import { PlayerMapTab } from "./map/PlayerMapTab";
+import { PlayerCombatTab } from "./combat/PlayerCombatTab";
 
 const TABS = [
   { id: "cover", label: "Cover" },
@@ -48,13 +49,18 @@ export function Journal({
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [codexOpen, setCodexOpen] = useState(false);
   const [hasMap, setHasMap] = useState(false);
+  const [hasCombat, setHasCombat] = useState(false);
   const [mapSessionId, setMapSessionId] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const burgerRef = useRef<HTMLButtonElement>(null);
 
 
 
-  const tabs = hasMap ? [...TABS, { id: "map", label: "Map" }] : TABS;
+  const tabs = [
+    ...TABS,
+    ...(hasMap ? [{ id: "map", label: "Map" }] : []),
+    ...(hasCombat ? [{ id: "combat", label: "Combat" }] : []),
+  ];
 
   // Does this character's DM have an active campaign map?
   useEffect(() => {
@@ -70,6 +76,23 @@ export function Journal({
       if (alive) setHasMap((data ?? []).length > 0);
     })();
     return () => { alive = false; };
+  }, [userId, character.id]);
+
+  useEffect(() => {
+    let alive = true;
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    (async () => {
+      const { data: mems } = await (supabase as any).from("campaign_members").select("campaign_id").eq("player_user_id", userId).eq("character_id", character.id);
+      const ids = (mems ?? []).map((m: any) => m.campaign_id);
+      const check = async () => {
+        if (!ids.length) { if (alive) setHasCombat(false); return; }
+        const { data } = await (supabase as any).from("combat_sessions").select("id").in("campaign_id", ids).eq("is_active", true).limit(1);
+        if (alive) setHasCombat((data ?? []).length > 0);
+      };
+      await check();
+      channel = supabase.channel(`journal-combat-${character.id}`).on("postgres_changes", { event: "*", schema: "public", table: "combat_sessions" }, check).subscribe();
+    })();
+    return () => { alive = false; if (channel) supabase.removeChannel(channel); };
   }, [userId, character.id]);
 
   // "View on Map" from the Sessions tab
@@ -146,6 +169,7 @@ export function Journal({
     if (id === "notes") return <NotesTab characterId={character.id} readOnly={readOnly} />;
     if (id === "dice") return <DiceTrayTab />;
     if (id === "map") return <PlayerMapTab userId={userId} characterId={character.id} readOnly={readOnly} highlightSessionId={mapSessionId} />;
+    if (id === "combat") return <PlayerCombatTab userId={userId} characterId={character.id} />;
     return null;
   }
 
