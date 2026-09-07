@@ -181,6 +181,7 @@ function DmDashboard({ userId, onClose }: { userId: string; onClose: () => void 
       .on("postgres_changes", { event: "*", schema: "public", table: "campaign_members" }, () => load())
       .on("postgres_changes", { event: "*", schema: "public", table: "campaigns", filter: `dm_user_id=eq.${userId}` }, () => load())
       .on("postgres_changes", { event: "*", schema: "public", table: "player_notifications", filter: `from_user_id=eq.${userId}` }, () => load())
+      .on("postgres_changes", { event: "*", schema: "public", table: "combat_sessions" }, () => load())
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, [userId, load]);

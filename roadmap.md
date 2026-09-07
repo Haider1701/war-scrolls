@@ -1,5 +1,5 @@
 ## Remaining work
-- [ ] Redesign DM dashboard shell and campaign tabs
-- [ ] Build DM and player combat tracker interfaces
-- [ ] Fix map upload/display security end-to-end
-- [ ] Verify authenticated map and combat flows
+- [x] Redesign DM dashboard shell and campaign tabs
+- [x] Build DM and player combat tracker interfaces
+- [x] Fix map upload/display security end-to-end
+- [x] Verify database permissions and compile the map/combat flows

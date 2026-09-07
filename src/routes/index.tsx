@@ -16,6 +16,10 @@ export const Route = createFileRoute("/")({
     meta: [
       { title: "Ember Codex — D&D Character Journal" },
       { name: "description", content: "A handcrafted dark-fantasy journal for your D&D character — track stats, spells, sessions, NPCs and gear." },
+      { property: "og:title", content: "Ember Codex — D&D Character Journal" },
+      { property: "og:description", content: "A dark-fantasy D&D journal for characters, campaigns, maps, combat, spells, and sessions." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: Index,
