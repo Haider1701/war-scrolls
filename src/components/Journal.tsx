@@ -65,17 +65,22 @@ export function Journal({
   // Does this character's DM have an active campaign map?
   useEffect(() => {
     let alive = true;
+    let channel: ReturnType<typeof supabase.channel> | null = null;
     (async () => {
       const { data: mems } = await (supabase as any)
         .from("campaign_members").select("campaign_id")
         .eq("player_user_id", userId).eq("character_id", character.id);
       const ids = (mems ?? []).map((m: any) => m.campaign_id);
-      if (ids.length === 0) { if (alive) setHasMap(false); return; }
-      const { data } = await (supabase as any)
-        .from("campaign_maps").select("id").in("campaign_id", ids).eq("is_active", true).limit(1);
-      if (alive) setHasMap((data ?? []).length > 0);
+      const check = async () => {
+        if (ids.length === 0) { if (alive) setHasMap(false); return; }
+        const { data } = await (supabase as any)
+          .from("campaign_maps").select("id").in("campaign_id", ids).eq("is_active", true).limit(1);
+        if (alive) setHasMap((data ?? []).length > 0);
+      };
+      await check();
+      channel = supabase.channel(`journal-map-${character.id}`).on("postgres_changes", { event: "*", schema: "public", table: "campaign_maps" }, check).subscribe();
     })();
-    return () => { alive = false; };
+    return () => { alive = false; if (channel) supabase.removeChannel(channel); };
   }, [userId, character.id]);
 
   useEffect(() => {
@@ -94,6 +99,11 @@ export function Journal({
     })();
     return () => { alive = false; if (channel) supabase.removeChannel(channel); };
   }, [userId, character.id]);
+
+  useEffect(() => {
+    if (tab === "map" && !hasMap) setTab("cover");
+    if (tab === "combat" && !hasCombat) setTab("cover");
+  }, [hasMap, hasCombat, tab]);
 
   // "View on Map" from the Sessions tab
   useEffect(() => {
