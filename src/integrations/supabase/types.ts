@@ -280,11 +280,13 @@ export type Database = {
           important_notes: string
           initiative: number
           languages: string | null
+          level_up_approved_by_dm: boolean
           magic_items: string
           name: string
           npc_actions: string | null
           npc_quotes: string | null
           passive_perception: number | null
+          pending_level_up: boolean
           player_name: string
           proficiency_bonus: number | null
           race: string | null
@@ -328,11 +330,13 @@ export type Database = {
           important_notes?: string
           initiative?: number
           languages?: string | null
+          level_up_approved_by_dm?: boolean
           magic_items?: string
           name?: string
           npc_actions?: string | null
           npc_quotes?: string | null
           passive_perception?: number | null
+          pending_level_up?: boolean
           player_name?: string
           proficiency_bonus?: number | null
           race?: string | null
@@ -376,11 +380,13 @@ export type Database = {
           important_notes?: string
           initiative?: number
           languages?: string | null
+          level_up_approved_by_dm?: boolean
           magic_items?: string
           name?: string
           npc_actions?: string | null
           npc_quotes?: string | null
           passive_perception?: number | null
+          pending_level_up?: boolean
           player_name?: string
           proficiency_bonus?: number | null
           race?: string | null
