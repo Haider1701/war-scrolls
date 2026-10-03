@@ -182,6 +182,7 @@ function DmDashboard({ userId, onClose }: { userId: string; onClose: () => void 
       .on("postgres_changes", { event: "*", schema: "public", table: "campaigns", filter: `dm_user_id=eq.${userId}` }, () => load())
       .on("postgres_changes", { event: "*", schema: "public", table: "player_notifications", filter: `from_user_id=eq.${userId}` }, () => load())
       .on("postgres_changes", { event: "*", schema: "public", table: "combat_sessions" }, () => load())
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "characters" }, () => load())
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, [userId, load]);
