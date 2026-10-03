@@ -57,10 +57,16 @@ export async function uploadMap(
     img.src = url;
   });
 
-  const ext = file.name.split(".").pop()?.toLowerCase() || "png";
-  const path = `${campaignId}/${crypto.randomUUID()}.${ext}`;
-  const up = await supabase.storage.from("campaign-maps").upload(path, file, { contentType: file.type });
-  if (up.error) return { error: up.error.message };
+  // Path MUST start with the campaign id — storage rules check that folder.
+  const safeName = file.name.toLowerCase().replace(/[^a-z0-9._-]+/g, "_").slice(-80) || "map.png";
+  const path = `${campaignId}/${Date.now()}_${safeName}`;
+  const up = await supabase.storage.from("campaign-maps").upload(path, file, { contentType: file.type, upsert: false });
+  if (up.error) {
+    const msg = /row-level security/i.test(up.error.message)
+      ? "Upload blocked — only this campaign's DM can upload maps."
+      : up.error.message;
+    return { error: msg };
+  }
 
   const { data, error } = await db
     .from("campaign_maps")
