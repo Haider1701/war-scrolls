@@ -1177,6 +1177,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      dm_set_level_up: {
+        Args: { _character_id: string; _pending: boolean }
+        Returns: undefined
+      }
       is_campaign_dm: { Args: { _campaign_id: string }; Returns: boolean }
       is_campaign_member: { Args: { _campaign_id: string }; Returns: boolean }
       is_character_owner: { Args: { _character_id: string }; Returns: boolean }
