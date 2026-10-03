@@ -100,6 +100,15 @@ export function Journal({
     return () => { alive = false; if (channel) supabase.removeChannel(channel); };
   }, [userId, character.id]);
 
+  // Live: DM granting/revoking a level up
+  useEffect(() => {
+    const ch = supabase.channel(`journal-char-${character.id}`)
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "characters", filter: `id=eq.${character.id}` }, (p: any) => {
+        setCharacter((c) => ({ ...c, pending_level_up: p.new.pending_level_up, level_up_approved_by_dm: p.new.level_up_approved_by_dm }));
+      }).subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [character.id]);
+
   useEffect(() => {
     if (tab === "map" && !hasMap) setTab("cover");
     if (tab === "combat" && !hasCombat) setTab("cover");
@@ -171,7 +180,7 @@ export function Journal({
         affliction_note: c.affliction_note, image_url: c.image_url,
       }).eq("id", c.id);
     }} readOnly={readOnly} />;
-    if (id === "stats") return <StatsTab character={character} onChange={setCharacter} readOnly={readOnly} />;
+    if (id === "stats") return <StatsTab key={`${character.class_level}|${character.class_level_2}|${character.hp_max}`} character={character} onChange={setCharacter} readOnly={readOnly} />;
     if (id === "backstory") return <BackstoryTab character={character} onChange={setCharacter} readOnly={readOnly} />;
     if (id === "spells") return <SpellsTab characterId={character.id} readOnly={readOnly} />;
     if (id === "sessions") return <SessionsTab characterId={character.id} readOnly={readOnly} />;
@@ -244,6 +253,11 @@ export function Journal({
           </div>
 
           <div className="flex-1" />
+          {character.pending_level_up && (
+            <button className="j-btn lvl-glow shrink-0 !py-1 text-xs" onClick={() => go("cover")} title="Open the Cover tab and click Level Up!">
+              ⬆️ Level Up Available!
+            </button>
+          )}
           <button className="j-btn shrink-0 mr-1" onClick={() => setCodexOpen(true)}>Codex</button>
           <button
             ref={burgerRef}

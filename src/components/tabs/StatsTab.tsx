@@ -114,7 +114,7 @@ export function StatsTab({ character, onChange, readOnly }: {
     <div className="j-fade space-y-6">
       <div className="flex items-center justify-between">
         <div className="text-sm text-[var(--color-muted)]">Level {(parseInt(String(character.class_level).match(/(\d+)\s*$/)?.[1] ?? "0") + parseInt(String(character.class_level_2 ?? "").match(/(\d+)\s*$/)?.[1] ?? "0")) || "—"}</div>
-        <LevelUpButton character={character} readOnly={readOnly} onApplied={(c) => { onChange(c); window.setTimeout(() => window.location.reload(), 50); }} />
+        <LevelUpButton character={character} readOnly={readOnly} onApplied={onChange} />
       </div>
       <div className="j-card flex flex-wrap items-center gap-6">
         <div>
