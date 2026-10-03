@@ -1022,3 +1022,14 @@ html[data-theme="tome"] .dice-tray {
 @media (prefers-reduced-motion: reduce) {
   .j-turn-banner, .j-round-flash { animation: none; }
 }
+
+/* Level Up */
+@keyframes lvl-glow { 0%,100% { box-shadow: 0 0 6px rgba(255,170,40,.5); } 50% { box-shadow: 0 0 18px rgba(255,170,40,.95); } }
+.lvl-glow { animation: lvl-glow 1.6s ease-in-out infinite; border-color: var(--color-flame) !important; }
+@keyframes lvl-spin { from { transform: rotate(0) scale(1.1); } to { transform: rotate(360deg) scale(1); } }
+.lvl-dice-spin { animation: lvl-spin .2s linear infinite; }
+@keyframes lvl-flash { 0% { opacity: .9; } 100% { opacity: 0; } }
+.lvl-flash { position: absolute; inset: 0; background: radial-gradient(circle, rgba(255,200,80,.85), rgba(255,106,0,.3) 50%, transparent 75%); animation: lvl-flash 1.4s ease-out forwards; }
+@keyframes lvl-burst { 0% { transform: rotate(var(--a)) translateX(0); opacity: 1; } 100% { transform: rotate(var(--a)) translateX(var(--d)); opacity: 0; } }
+.lvl-spark { position: absolute; left: 50%; top: 50%; width: 6px; height: 6px; border-radius: 50%; background: var(--color-flame); box-shadow: 0 0 8px var(--color-ember); animation: lvl-burst 1.3s ease-out forwards; }
+@media (prefers-reduced-motion: reduce) { .lvl-glow, .lvl-dice-spin, .lvl-spark, .lvl-flash { animation: none; } }

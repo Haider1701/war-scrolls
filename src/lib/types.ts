@@ -27,6 +27,8 @@ export type Character = {
   tools_prof: string;
   backstory: string;
   ai_generated?: boolean;
+  pending_level_up?: boolean;
+  level_up_approved_by_dm?: boolean;
   features: { title: string; description: string }[];
 
   npc_quotes: string;

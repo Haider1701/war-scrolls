@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Character } from "@/lib/types";
 import { abilityMod, formatMulticlass, parseLevel, profBonusForLevel, totalLevel } from "@/lib/types";
 import { CharacterGallery } from "../CharacterGallery";
+import { LevelUpButton } from "../LevelUpModal";
 import { DND_CLASSES, DND_RACES, DND_BACKGROUNDS, DND_ALIGNMENTS } from "@/lib/dnd-data";
 
 const db = supabase as any;
@@ -102,7 +103,7 @@ export function CoverTab({ character, onChange, readOnly }: {
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">
         {/* Class & Level (with multiclass) */}
         <div className="j-card md:col-span-3">
-          <div className="text-[10px] uppercase tracking-widest text-[var(--color-muted)] mb-1">Class & Level</div>
+          <div className="flex items-center justify-between mb-1"><div className="text-[10px] uppercase tracking-widest text-[var(--color-muted)]">Class & Level</div><LevelUpButton character={character} readOnly={readOnly} onApplied={onChange} /></div>
           {readOnly ? (
             <div className="j-glow-text" style={{ fontFamily: "var(--font-uncial)", fontSize: "1.1rem" }}>
               {classDisplay || <span className="text-[var(--color-muted)] italic">unset</span>}
