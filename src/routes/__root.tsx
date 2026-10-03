@@ -22,13 +22,13 @@ function NotFoundComponent() {
   );
 }
 
-function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
+function ErrorComponent({ error, reset }: import("@tanstack/react-router").ErrorComponentProps) {
   useEffect(() => { reportLovableError(error, { boundary: "root" }); }, [error]);
   return (
     <div className="flex min-h-screen items-center justify-center p-6">
       <div className="j-page p-10 text-center max-w-md">
         <h1 className="j-h text-2xl">The fire flickers&hellip;</h1>
-        <p className="mt-3 text-[var(--color-muted)]">{error.message}</p>
+        <p className="mt-3 text-[var(--color-muted)]">{error instanceof Error ? error.message : String(error)}</p>
         <button onClick={reset} className="j-btn mt-6">Rekindle</button>
       </div>
     </div>

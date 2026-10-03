@@ -182,6 +182,7 @@ function DmDashboard({ userId, onClose }: { userId: string; onClose: () => void 
       .on("postgres_changes", { event: "*", schema: "public", table: "campaigns", filter: `dm_user_id=eq.${userId}` }, () => load())
       .on("postgres_changes", { event: "*", schema: "public", table: "player_notifications", filter: `from_user_id=eq.${userId}` }, () => load())
       .on("postgres_changes", { event: "*", schema: "public", table: "combat_sessions" }, () => load())
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "characters" }, () => load())
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, [userId, load]);
@@ -469,6 +470,11 @@ function DmDashboard({ userId, onClose }: { userId: string; onClose: () => void 
                         requesting={requesting === m.membership_id}
                         requested={!!requested[m.membership_id]}
                         onRequest={() => requestAccess(m, selected.campaign)}
+                        onToggleLevelUp={async (v) => {
+                          if (!m.character_id) return;
+                          const { error } = await db.rpc("dm_set_level_up", { _character_id: m.character_id, _pending: v });
+                          if (!error) load();
+                        }}
                         onView={() =>
                           m.character &&
                           setSelectedSheet({
@@ -519,8 +525,9 @@ function StatBubble({ label, value, icon, accent }: { label: string; value: numb
   );
 }
 
-function RosterCard({ member, onView, onRequest, requesting, requested }: {
+function RosterCard({ member, onView, onRequest, requesting, requested, onToggleLevelUp }: {
   member: Member; onView: () => void; onRequest: () => void; requesting: boolean; requested: boolean;
+  onToggleLevelUp: (pending: boolean) => void;
 }) {
   const c = member.character;
   const shared = member.share_sheet_with_dm;
@@ -572,6 +579,17 @@ function RosterCard({ member, onView, onRequest, requesting, requested }: {
               <MiniStat label="SPD" value={c.speed} />
             </div>
 
+            <div className="mt-2">
+              {c.pending_level_up ? (
+                <button onClick={() => onToggleLevelUp(false)} className="j-btn j-btn-ghost lvl-glow !py-1 !px-3 text-xs w-full">
+                  ⏳ Level Up Pending · Revoke
+                </button>
+              ) : (
+                <button onClick={() => onToggleLevelUp(true)} className="j-btn !py-1 !px-3 text-xs w-full">
+                  ⬆️ Grant Level Up
+                </button>
+              )}
+            </div>
             <div className="mt-2">
               {shared ? (
                 <button

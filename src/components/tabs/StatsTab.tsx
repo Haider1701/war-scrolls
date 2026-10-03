@@ -5,6 +5,7 @@ import { SKILL_LIST, SAVE_LIST, abilityMod, fmtMod } from "@/lib/types";
 import { useDiceRoller } from "@/components/DiceRoller";
 import { parseModifier } from "@/lib/dice";
 import { computeAverageHP } from "@/lib/dnd-data";
+import { LevelUpButton } from "@/components/LevelUpModal";
 
 const db = supabase as any;
 
@@ -111,6 +112,10 @@ export function StatsTab({ character, onChange, readOnly }: {
 
   return (
     <div className="j-fade space-y-6">
+      <div className="flex items-center justify-between">
+        <div className="text-sm text-[var(--color-muted)]">Level {(parseInt(String(character.class_level).match(/(\d+)\s*$/)?.[1] ?? "0") + parseInt(String(character.class_level_2 ?? "").match(/(\d+)\s*$/)?.[1] ?? "0")) || "—"}</div>
+        <LevelUpButton character={character} readOnly={readOnly} onApplied={onChange} />
+      </div>
       <div className="j-card flex flex-wrap items-center gap-6">
         <div>
           <div className="text-[10px] uppercase tracking-widest text-[var(--color-muted)] flex items-center gap-2">
