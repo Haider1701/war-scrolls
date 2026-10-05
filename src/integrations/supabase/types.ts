@@ -774,6 +774,48 @@ export type Database = {
           },
         ]
       }
+      npc_relationships: {
+        Row: {
+          character_id: string
+          created_at: string
+          id: string
+          notes: string | null
+          npc_id: string
+          relationship_type: string
+        }
+        Insert: {
+          character_id: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          npc_id: string
+          relationship_type?: string
+        }
+        Update: {
+          character_id?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          npc_id?: string
+          relationship_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "npc_relationships_character_id_fkey"
+            columns: ["character_id"]
+            isOneToOne: false
+            referencedRelation: "characters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "npc_relationships_npc_id_fkey"
+            columns: ["npc_id"]
+            isOneToOne: true
+            referencedRelation: "npcs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       npcs: {
         Row: {
           character_id: string
