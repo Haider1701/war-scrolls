@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Currency, Equipment, NPC, Session } from "@/lib/types";
+import { RelationshipWeb, REL_TYPES, REL_COLOR, type RelType } from "../RelationshipWeb";
 
 const db = supabase as any;
 const DISP: NPC["disposition"][] = ["ally","neutral","hostile","missing"];
@@ -14,15 +15,19 @@ export function NpcsGearTab({ characterId, readOnly }: { characterId: string; re
   const [sessions, setSessions] = useState<Session[]>([]);
   const [group, setGroup] = useState<GroupMode>("all");
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
+  const [viewMode, setViewMode] = useState<"list" | "web">("list");
+  const [rels, setRels] = useState<Record<string, RelType>>({});
 
   useEffect(() => {
     (async () => {
-      const [n, g, c, s] = await Promise.all([
+      const [n, g, c, s, r] = await Promise.all([
         db.from("npcs").select("*").eq("character_id", characterId),
         db.from("equipment").select("*").eq("character_id", characterId),
         db.from("currency").select("*").eq("character_id", characterId).maybeSingle(),
         db.from("sessions").select("*").eq("character_id", characterId).order("session_number"),
+        db.from("npc_relationships").select("npc_id,relationship_type").eq("character_id", characterId),
       ]);
+      setRels(Object.fromEntries((r.data ?? []).map((x: any) => [x.npc_id, x.relationship_type])));
       setNpcs(n.data ?? []);
       setGear(g.data ?? []);
       setCoin(c.data ?? { character_id: characterId, cp:0, sp:0, ep:0, gp:0, pp:0 });
@@ -37,6 +42,10 @@ export function NpcsGearTab({ characterId, readOnly }: { characterId: string; re
   async function updateNpc(n: NPC, patch: Partial<NPC>) {
     setNpcs(npcs.map((x) => x.id === n.id ? { ...x, ...patch } : x));
     await db.from("npcs").update(patch).eq("id", n.id);
+  }
+  async function setRel(npcId: string, t: RelType) {
+    setRels((r) => ({ ...r, [npcId]: t }));
+    await db.from("npc_relationships").upsert({ character_id: characterId, npc_id: npcId, relationship_type: t }, { onConflict: "npc_id" });
   }
   async function removeNpc(id: string) {
     setNpcs(npcs.filter((n) => n.id !== id));
@@ -116,6 +125,17 @@ export function NpcsGearTab({ characterId, readOnly }: { characterId: string; re
             </select>
           </div>
         )}
+        <div className="mt-2 flex items-center gap-2">
+          <span className="text-[10px] uppercase tracking-widest text-[var(--color-muted)]">Relationship to Character</span>
+          {readOnly ? (
+            <span className="text-[10px] uppercase tracking-widest px-2 py-0.5 rounded" style={{ border: `1px solid ${REL_COLOR[rels[n.id] ?? "unknown"]}`, color: REL_COLOR[rels[n.id] ?? "unknown"] }}>{rels[n.id] ?? "unknown"}</span>
+          ) : (
+            <select className="bg-[var(--color-coal)] text-xs rounded px-2 py-1 outline-none border" style={{ borderColor: REL_COLOR[rels[n.id] ?? "unknown"] }}
+              value={rels[n.id] ?? "unknown"} onChange={(e) => setRel(n.id, e.target.value as RelType)}>
+              {REL_TYPES.map((t) => <option key={t} value={t}>{t[0].toUpperCase() + t.slice(1)}</option>)}
+            </select>
+          )}
+        </div>
         {readOnly && n.session_id && (
           <div className="mt-2 text-[10px] uppercase tracking-widest text-[var(--color-muted)]">
             {sessions.find((s) => s.id === n.session_id)?.title || `Session ${sessions.find((s) => s.id === n.session_id)?.session_number ?? ""}`}
@@ -131,8 +151,12 @@ export function NpcsGearTab({ characterId, readOnly }: { characterId: string; re
       <div>
         <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
           <h3 className="j-h text-xl">👥 Allies & Adversaries</h3>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <div className="flex rounded overflow-hidden border border-[var(--color-ember)]/30 text-[10px] uppercase tracking-widest">
+              <button className={`px-2 py-1 ${viewMode === "list" ? "bg-[var(--color-ember)]/30 text-[var(--color-flame)]" : "text-[var(--color-muted)]"}`} onClick={() => setViewMode("list")}>📋 List View</button>
+              <button className={`px-2 py-1 ${viewMode === "web" ? "bg-[var(--color-ember)]/30 text-[var(--color-flame)]" : "text-[var(--color-muted)]"}`} onClick={() => setViewMode("web")}>🕸️ Relationship Web</button>
+            </div>
+            {viewMode === "list" && <div className="flex rounded overflow-hidden border border-[var(--color-ember)]/30 text-[10px] uppercase tracking-widest">
               <button
                 className={`px-2 py-1 ${group === "all" ? "bg-[var(--color-ember)]/30 text-[var(--color-flame)]" : "text-[var(--color-muted)]"}`}
                 onClick={() => setGroup("all")}
@@ -141,12 +165,14 @@ export function NpcsGearTab({ characterId, readOnly }: { characterId: string; re
                 className={`px-2 py-1 ${group === "by_session" ? "bg-[var(--color-ember)]/30 text-[var(--color-flame)]" : "text-[var(--color-muted)]"}`}
                 onClick={() => setGroup("by_session")}
               >By Session</button>
-            </div>
+            </div>}
             {!readOnly && <button className="j-btn" onClick={addNpc}>+ NPC</button>}
           </div>
         </div>
 
-        {group === "all" ? (
+        {viewMode === "web" ? (
+          <RelationshipWeb characterId={characterId} npcs={npcs} rels={rels} />
+        ) : group === "all" ? (
           <div className="grid md:grid-cols-2 gap-3">
             {npcs.length === 0 && <div className="text-[var(--color-muted)] italic">No souls recorded.</div>}
             {npcs.map(renderNpcCard)}
