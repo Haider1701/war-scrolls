@@ -212,6 +212,67 @@ export type Database = {
         }
         Relationships: []
       }
+      character_events: {
+        Row: {
+          character_id: string
+          created_at: string
+          description: string
+          event_date: string | null
+          event_type: string
+          id: string
+          level_at: number | null
+          linked_npc_id: string | null
+          linked_session_id: string | null
+          title: string
+        }
+        Insert: {
+          character_id: string
+          created_at?: string
+          description?: string
+          event_date?: string | null
+          event_type: string
+          id?: string
+          level_at?: number | null
+          linked_npc_id?: string | null
+          linked_session_id?: string | null
+          title?: string
+        }
+        Update: {
+          character_id?: string
+          created_at?: string
+          description?: string
+          event_date?: string | null
+          event_type?: string
+          id?: string
+          level_at?: number | null
+          linked_npc_id?: string | null
+          linked_session_id?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "character_events_character_id_fkey"
+            columns: ["character_id"]
+            isOneToOne: false
+            referencedRelation: "characters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "character_events_linked_npc_id_fkey"
+            columns: ["linked_npc_id"]
+            isOneToOne: false
+            referencedRelation: "npcs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "character_events_linked_session_id_fkey"
+            columns: ["linked_session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       character_images: {
         Row: {
           character_id: string
@@ -278,6 +339,7 @@ export type Database = {
           id: string
           image_url: string | null
           important_notes: string
+          in_game_age: string | null
           initiative: number
           languages: string | null
           level_up_approved_by_dm: boolean
@@ -328,6 +390,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           important_notes?: string
+          in_game_age?: string | null
           initiative?: number
           languages?: string | null
           level_up_approved_by_dm?: boolean
@@ -378,6 +441,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           important_notes?: string
+          in_game_age?: string | null
           initiative?: number
           languages?: string | null
           level_up_approved_by_dm?: boolean
