@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Character, Traits } from "@/lib/types";
 import { formatMulticlass } from "@/lib/types";
 import { BackstoryGeneratorModal } from "@/components/BackstoryGeneratorModal";
+import { CharacterTimeline } from "@/components/CharacterTimeline";
 
 
 const db = supabase as any;
@@ -113,6 +114,8 @@ export function BackstoryTab({ character, onChange, readOnly }: {
           ))}
         </div>
       </div>
+
+      <CharacterTimeline character={character} readOnly={readOnly} />
 
       <div>
         <div className="flex items-center justify-between mb-3">

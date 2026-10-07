@@ -1,3 +1,4 @@
+import { logCharacterEvent } from "@/components/CharacterTimeline";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { NPC, Session } from "@/lib/types";
@@ -31,7 +32,10 @@ export function SessionsTab({ characterId, readOnly }: { characterId: string; re
       character_id: characterId, session_number: next, title: `Session ${next}`,
       date_played: "", notes: ["","","","",""], encounter_notes: "",
     }).select().single();
-    if (data) setSessions([...sessions, data]);
+    if (data) {
+      setSessions([...sessions, data]);
+      logCharacterEvent({ character_id: characterId, event_type: "session", title: data.title, linked_session_id: data.id });
+    }
   }
   async function update(s: Session, patch: Partial<Session>) {
     setSessions(sessions.map((x) => x.id === s.id ? { ...x, ...patch } : x));
