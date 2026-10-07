@@ -98,6 +98,16 @@ export function CoverTab({ character, onChange, readOnly }: {
             maxLength={160}
           />
         )}
+        {readOnly ? (
+          character.in_game_age ? <div className="text-sm text-[var(--color-muted)] mt-1">Age: {character.in_game_age}</div> : null
+        ) : (
+          <div className="flex items-center justify-center gap-2 mt-2 text-sm text-[var(--color-muted)]">
+            Age:
+            <input className="bg-transparent outline-none border-b border-dashed border-[rgba(255,106,0,0.25)] w-32 text-center"
+              placeholder="optional" value={character.in_game_age ?? ""} maxLength={40}
+              onChange={(e) => { const v = e.target.value; onChange({ ...character, in_game_age: v }); db.from("characters").update({ in_game_age: v || null }).eq("id", character.id); }} />
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">

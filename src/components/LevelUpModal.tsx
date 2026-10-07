@@ -8,6 +8,7 @@ import {
   slotDiff, slotsForClassLevel, spellsLearnedAtLevel,
 } from "@/lib/levelUpData";
 import { loadSpells, type ApiSpell } from "@/lib/spellSearch";
+import { logCharacterEvent } from "./CharacterTimeline";
 
 const db = supabase as any;
 const ABILS: (keyof Abilities)[] = ["strength", "dexterity", "constitution", "intelligence", "wisdom", "charisma"];
@@ -167,6 +168,11 @@ export function LevelUpModal({ character, onClose, onApplied }: {
       })));
     }
 
+    await logCharacterEvent({
+      character_id: character.id, event_type: "level_up", level_at: newTotal,
+      title: `Reached level ${newTotal}`,
+      description: [`${cls} ${newClassLvl}`, `HP +${hpGain}`, ...features.map((f) => f.choice?.kind === "subclass" ? subclass : f.name), ...picked.map((p) => `Spell: ${p.name}`)].filter(Boolean).join(" · "),
+    });
     setSaving(false);
     setCelebrate(true);
     window.setTimeout(() => {

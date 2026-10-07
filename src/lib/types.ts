@@ -28,6 +28,7 @@ export type Character = {
   backstory: string;
   ai_generated?: boolean;
   pending_level_up?: boolean;
+  in_game_age?: string | null;
   level_up_approved_by_dm?: boolean;
   features: { title: string; description: string }[];
 
