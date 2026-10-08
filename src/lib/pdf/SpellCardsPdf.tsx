@@ -94,7 +94,7 @@ export function SpellCardsPdf({ spells, owner, klass, palette: p, fonts: f, appN
             <View key={sp.id} style={[s.back, pos(i, true)]}>
               <View style={s.frame}><View style={s.frame2}>
                 <Text style={s.logo}>{appName}</Text>
-                <Text style={s.sub}>✦ Spell Card ✦</Text>
+                <Text style={s.sub}>— Spell Card —</Text>
               </View></View>
               <Text style={s.backName}>{owner}</Text>
             </View>
