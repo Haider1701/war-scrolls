@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Spell, SpellMeta } from "@/lib/types";
 import { abilityMod, profBonusForLevel, totalLevel } from "@/lib/types";
 import { loadSpells, searchSpells, type ApiSpell } from "@/lib/spellSearch";
+import { SpellCardModal } from "@/components/SpellCardModal";
 
 const db = supabase as any;
 
@@ -24,6 +25,7 @@ export function SpellsTab({ characterId, readOnly }: { characterId: string; read
   const [adding, setAdding] = useState<number | null>(null);
   const [abilities, setAbilities] = useState<any>(null);
   const [profBonus, setProfBonus] = useState<number>(2);
+  const [cardsOpen, setCardsOpen] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -98,6 +100,10 @@ export function SpellsTab({ characterId, readOnly }: { characterId: string; read
 
   return (
     <div className="j-fade space-y-6">
+      <div className="flex justify-end">
+        <button className="j-btn" onClick={() => setCardsOpen(true)}>🃏 Print Spell Cards</button>
+      </div>
+      {cardsOpen && <SpellCardModal characterId={characterId} spells={spells} onClose={() => setCardsOpen(false)} />}
       <div className="j-card grid grid-cols-2 md:grid-cols-4 gap-4">
         <MetaField label="Ability" value={meta.spellcasting_ability} readOnly={readOnly}
           onChange={(v) => updateMeta({ spellcasting_ability: v })} />
