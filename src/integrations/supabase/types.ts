@@ -188,6 +188,7 @@ export type Database = {
           join_code: string
           name: string
           session_notes: string | null
+          show_party_hp: boolean
           updated_at: string
         }
         Insert: {
@@ -198,6 +199,7 @@ export type Database = {
           join_code: string
           name: string
           session_notes?: string | null
+          show_party_hp?: boolean
           updated_at?: string
         }
         Update: {
@@ -208,6 +210,7 @@ export type Database = {
           join_code?: string
           name?: string
           session_notes?: string | null
+          show_party_hp?: boolean
           updated_at?: string
         }
         Relationships: []
@@ -325,6 +328,7 @@ export type Database = {
           class_level: string | null
           class_level_2: string | null
           combat_notes: string
+          concentration_spell: string | null
           consumables: string
           created_at: string
           custom_theme: Json | null
@@ -354,7 +358,9 @@ export type Database = {
           race: string | null
           racial_traits: string
           speed: number | null
+          status_conditions: string[]
           subtitle: string | null
+          temp_hp: number
           theme: string | null
           tools_prof: string | null
           user_id: string
@@ -376,6 +382,7 @@ export type Database = {
           class_level?: string | null
           class_level_2?: string | null
           combat_notes?: string
+          concentration_spell?: string | null
           consumables?: string
           created_at?: string
           custom_theme?: Json | null
@@ -405,7 +412,9 @@ export type Database = {
           race?: string | null
           racial_traits?: string
           speed?: number | null
+          status_conditions?: string[]
           subtitle?: string | null
+          temp_hp?: number
           theme?: string | null
           tools_prof?: string | null
           user_id: string
@@ -427,6 +436,7 @@ export type Database = {
           class_level?: string | null
           class_level_2?: string | null
           combat_notes?: string
+          concentration_spell?: string | null
           consumables?: string
           created_at?: string
           custom_theme?: Json | null
@@ -456,7 +466,9 @@ export type Database = {
           race?: string | null
           racial_traits?: string
           speed?: number | null
+          status_conditions?: string[]
           subtitle?: string | null
+          temp_hp?: number
           theme?: string | null
           tools_prof?: string | null
           user_id?: string
@@ -928,6 +940,103 @@ export type Database = {
           },
         ]
       }
+      party_status: {
+        Row: {
+          armor_class: number
+          campaign_id: string
+          character_id: string
+          class_level: string
+          con_mod: number
+          concentration_spell: string | null
+          death_save_failures: number
+          death_save_successes: number
+          hit_dice: string
+          hp_current: number
+          hp_max: number
+          image_url: string | null
+          membership_id: string
+          name: string
+          passive_insight: number
+          passive_investigation: number
+          passive_perception: number
+          player_user_id: string
+          speed: number
+          status_conditions: string[]
+          temp_hp: number
+          updated_at: string
+        }
+        Insert: {
+          armor_class?: number
+          campaign_id: string
+          character_id: string
+          class_level?: string
+          con_mod?: number
+          concentration_spell?: string | null
+          death_save_failures?: number
+          death_save_successes?: number
+          hit_dice?: string
+          hp_current?: number
+          hp_max?: number
+          image_url?: string | null
+          membership_id: string
+          name?: string
+          passive_insight?: number
+          passive_investigation?: number
+          passive_perception?: number
+          player_user_id: string
+          speed?: number
+          status_conditions?: string[]
+          temp_hp?: number
+          updated_at?: string
+        }
+        Update: {
+          armor_class?: number
+          campaign_id?: string
+          character_id?: string
+          class_level?: string
+          con_mod?: number
+          concentration_spell?: string | null
+          death_save_failures?: number
+          death_save_successes?: number
+          hit_dice?: string
+          hp_current?: number
+          hp_max?: number
+          image_url?: string | null
+          membership_id?: string
+          name?: string
+          passive_insight?: number
+          passive_investigation?: number
+          passive_perception?: number
+          player_user_id?: string
+          speed?: number
+          status_conditions?: string[]
+          temp_hp?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "party_status_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "party_status_character_id_fkey"
+            columns: ["character_id"]
+            isOneToOne: false
+            referencedRelation: "characters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "party_status_membership_id_fkey"
+            columns: ["membership_id"]
+            isOneToOne: true
+            referencedRelation: "campaign_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       player_notifications: {
         Row: {
           campaign_id: string | null
@@ -1283,6 +1392,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      dm_long_rest: { Args: { _campaign_id: string }; Returns: undefined }
       dm_set_level_up: {
         Args: { _character_id: string; _pending: boolean }
         Returns: undefined
@@ -1291,6 +1401,10 @@ export type Database = {
       is_campaign_member: { Args: { _campaign_id: string }; Returns: boolean }
       is_character_owner: { Args: { _character_id: string }; Returns: boolean }
       is_shared_with_dm: { Args: { _character_id: string }; Returns: boolean }
+      refresh_party_status: {
+        Args: { _character_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
