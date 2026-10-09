@@ -14,6 +14,7 @@ import { DiceTrayTab } from "./tabs/DiceTrayTab";
 import { SettingsPanel } from "./SettingsPanel";
 import { Codex } from "./codex/Codex";
 import { PlayerMapTab } from "./map/PlayerMapTab";
+import { PlayerPartyTab } from "./party/PlayerPartyTab";
 import { PlayerCombatTab } from "./combat/PlayerCombatTab";
 
 const TABS = [
@@ -56,9 +57,16 @@ export function Journal({
 
 
 
+  const [hasCampaign, setHasCampaign] = useState(false);
+  useEffect(() => {
+    (supabase as any).from("campaign_members").select("id").eq("player_user_id", userId).eq("character_id", character.id).limit(1)
+      .then(({ data }: any) => setHasCampaign((data ?? []).length > 0));
+  }, [userId, character.id]);
+
   const tabs = [
     ...TABS,
     ...(hasMap ? [{ id: "map", label: "Map" }] : []),
+    ...(hasCampaign ? [{ id: "party", label: "Party" }] : []),
     ...(hasCombat ? [{ id: "combat", label: "Combat" }] : []),
   ];
 
@@ -112,6 +120,7 @@ export function Journal({
   useEffect(() => {
     if (tab === "map" && !hasMap) setTab("cover");
     if (tab === "combat" && !hasCombat) setTab("cover");
+    if (tab === "party" && !hasCampaign) setTab("cover");
   }, [hasMap, hasCombat, tab]);
 
   // "View on Map" from the Sessions tab
@@ -188,6 +197,7 @@ export function Journal({
     if (id === "notes") return <NotesTab characterId={character.id} readOnly={readOnly} />;
     if (id === "dice") return <DiceTrayTab />;
     if (id === "map") return <PlayerMapTab userId={userId} characterId={character.id} readOnly={readOnly} highlightSessionId={mapSessionId} />;
+    if (id === "party") return <PlayerPartyTab userId={userId} characterId={character.id} />;
     if (id === "combat") return <PlayerCombatTab userId={userId} characterId={character.id} />;
     return null;
   }

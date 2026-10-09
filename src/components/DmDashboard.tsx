@@ -1,3 +1,4 @@
+import { PartyDashboard } from "./party/PartyDashboard";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type {
@@ -96,7 +97,7 @@ function DmDashboard({ userId, onClose }: { userId: string; onClose: () => void 
   const [notesDraft, setNotesDraft] = useState<string>("");
   const [notesSaving, setNotesSaving] = useState(false);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
-  const [view, setView] = useState<"roster" | "map" | "journal" | "combat" | "settings">("roster");
+  const [view, setView] = useState<"roster" | "party" | "map" | "journal" | "combat" | "settings">("roster");
   const [activeCombat, setActiveCombat] = useState<Record<string, boolean>>({});
 
   const load = useCallback(async () => {
@@ -386,7 +387,7 @@ function DmDashboard({ userId, onClose }: { userId: string; onClose: () => void 
 
                 {/* Section tabs */}
                  <div className="flex gap-1 overflow-x-auto border-b border-[rgba(255,106,0,.2)]">
-                   {([["roster", "👥 Player Roster"], ["map", "🗺️ World Map"], ["journal", "📖 Campaign Journal"], ["combat", "⚔️ Combat"], ["settings", "⚙️ Settings"]] as const).map(([id, label]) => (
+                   {([["roster", "👥 Player Roster"], ["party", "🛡️ Party"], ["map", "🗺️ World Map"], ["journal", "📖 Campaign Journal"], ["combat", "⚔️ Combat"], ["settings", "⚙️ Settings"]] as const).map(([id, label]) => (
                     <button
                       key={id}
                       onClick={() => setView(id)}
@@ -398,6 +399,9 @@ function DmDashboard({ userId, onClose }: { userId: string; onClose: () => void 
                   ))}
                 </div>
 
+                {view === "party" && <PartyDashboard campaignId={selected.campaign.id} userId={userId} isDm
+                  onGrantLevelUp={async (cid) => { await db.rpc("dm_set_level_up", { _character_id: cid, _pending: true }); load(); }}
+                  onViewSheet={(cid) => { const m = selected.members.find((x) => x.character_id === cid); if (m?.character && m.share_sheet_with_dm) setSelectedSheet({ character: m.character, playerName: m.player_name, campaignName: selected.campaign.name }); else alert("This player hasn't shared their sheet with you yet. Request access from the Player Roster."); }} />}
                 {view === "map" && <WorldMapPanel campaignId={selected.campaign.id} userId={userId} />}
                  {view === "combat" && <CombatTracker campaignId={selected.campaign.id} members={selected.members} />}
                  {view === "journal" && <section className="j-card"><h3 className="j-h text-lg">Campaign Journal</h3><p className="text-sm text-[var(--color-muted)] mt-1">Shared chronicles and approved lore will appear here.</p></section>}
