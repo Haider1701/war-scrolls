@@ -14,6 +14,7 @@ import { DiceTrayTab } from "./tabs/DiceTrayTab";
 import { SettingsPanel } from "./SettingsPanel";
 import { Codex } from "./codex/Codex";
 import { PlayerMapTab } from "./map/PlayerMapTab";
+import { PlayerPartyTab } from "./party/PlayerPartyTab";
 import { PlayerCombatTab } from "./combat/PlayerCombatTab";
 
 const TABS = [
@@ -59,6 +60,7 @@ export function Journal({
   const tabs = [
     ...TABS,
     ...(hasMap ? [{ id: "map", label: "Map" }] : []),
+    ...(hasCampaign ? [{ id: "party", label: "Party" }] : []),
     ...(hasCombat ? [{ id: "combat", label: "Combat" }] : []),
   ];
 
@@ -188,6 +190,7 @@ export function Journal({
     if (id === "notes") return <NotesTab characterId={character.id} readOnly={readOnly} />;
     if (id === "dice") return <DiceTrayTab />;
     if (id === "map") return <PlayerMapTab userId={userId} characterId={character.id} readOnly={readOnly} highlightSessionId={mapSessionId} />;
+    if (id === "party") return <PlayerPartyTab userId={userId} characterId={character.id} />;
     if (id === "combat") return <PlayerCombatTab userId={userId} characterId={character.id} />;
     return null;
   }
