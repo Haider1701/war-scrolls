@@ -57,6 +57,12 @@ export function Journal({
 
 
 
+  const [hasCampaign, setHasCampaign] = useState(false);
+  useEffect(() => {
+    (supabase as any).from("campaign_members").select("id").eq("player_user_id", userId).eq("character_id", character.id).limit(1)
+      .then(({ data }: any) => setHasCampaign((data ?? []).length > 0));
+  }, [userId, character.id]);
+
   const tabs = [
     ...TABS,
     ...(hasMap ? [{ id: "map", label: "Map" }] : []),
@@ -114,6 +120,7 @@ export function Journal({
   useEffect(() => {
     if (tab === "map" && !hasMap) setTab("cover");
     if (tab === "combat" && !hasCombat) setTab("cover");
+    if (tab === "party" && !hasCampaign) setTab("cover");
   }, [hasMap, hasCombat, tab]);
 
   // "View on Map" from the Sessions tab
