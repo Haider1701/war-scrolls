@@ -8,6 +8,13 @@
       "when": 1791469962348,
       "tag": "0000_party_dashboard",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1791649302343,
+      "tag": "0001_characters_is_at_zero_hp",
+      "breakpoints": true
     }
   ]
 }
