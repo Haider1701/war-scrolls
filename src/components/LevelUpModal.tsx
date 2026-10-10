@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Abilities, Character } from "@/lib/types";
-import { abilityMod, profBonusForLevel, totalLevel } from "@/lib/types";
+import { abilityMod, profBonusForLevel, totalLevel, SKILL_LIST, SAVE_LIST } from "@/lib/types";
+import { recalcSkillModifier, recalcSpellNumbers } from "@/lib/levelUpMath";
 import { CLASS_HIT_DIE, parseClassString } from "@/lib/dnd-data";
 import {
   SUBCLASSES, cantripsGainedAtLevel, featuresForLevel, isSpellcaster, maxSpellLevel,
@@ -150,6 +151,24 @@ export function LevelUpModal({ character, onClose, onApplied }: {
     patch.features = featureList;
 
     const { data: saved } = await db.from("characters").update(patch).eq("id", character.id).select().single();
+
+    // Recalculate skills & saves from new abilities + proficiency
+    const { data: skillRows } = await db.from("skills").select("id,name,kind,proficient").eq("character_id", character.id);
+    await Promise.all((skillRows ?? []).map((r: any) => {
+      const def = (r.kind === "save" ? SAVE_LIST : SKILL_LIST).find((x) => x.name === r.name);
+      if (!def) return null;
+      return db.from("skills").update({ modifier: recalcSkillModifier(nextAb[def.ability] ?? 10, !!r.proficient, prof) }).eq("id", r.id);
+    }));
+
+    // Spell save DC & attack
+    if (meta?.spellcasting_ability) {
+      const key = ABILS.find((k) => k.startsWith(String(meta.spellcasting_ability).toLowerCase().slice(0, 3)));
+      if (key) {
+        const n = recalcSpellNumbers(nextAb[key] ?? 10, prof);
+        await db.from("spell_meta").update({ spell_save_dc: n.dc, spell_attack_bonus: n.attack }).eq("character_id", character.id);
+        meta.spell_save_dc = n.dc; meta.spell_attack_bonus = n.attack;
+      }
+    }
 
     // Spell slots
     if (caster && Object.keys(newSlots).length) {
