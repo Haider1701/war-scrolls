@@ -345,6 +345,7 @@ export type Database = {
           important_notes: string
           in_game_age: string | null
           initiative: number
+          is_at_zero_hp: boolean | null
           languages: string | null
           level_up_approved_by_dm: boolean
           magic_items: string
@@ -399,6 +400,7 @@ export type Database = {
           important_notes?: string
           in_game_age?: string | null
           initiative?: number
+          is_at_zero_hp?: boolean | null
           languages?: string | null
           level_up_approved_by_dm?: boolean
           magic_items?: string
@@ -453,6 +455,7 @@ export type Database = {
           important_notes?: string
           in_game_age?: string | null
           initiative?: number
+          is_at_zero_hp?: boolean | null
           languages?: string | null
           level_up_approved_by_dm?: boolean
           magic_items?: string
