@@ -4,3 +4,9 @@
 - [x] Fix map upload/display security end-to-end
 - [x] Verify database permissions and compile the map/combat flows
 - [x] Party Dashboard (DM + player tabs, live sync)
+- [ ] Build campaign Quests with DM controls and player read-only view
+- [ ] Build campaign Handouts with private DM management and player reveal view
+- [ ] Add DM AI NPC generation and session recap with daily usage cap
+- [ ] Add campaign Lore Wiki with visibility, search, markdown preview, and page links
+- [ ] Review and incorporate uploaded Monster Library / Encounter Builder requirements
+- [ ] Validate new campaign features and update roadmap
