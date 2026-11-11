@@ -55,6 +55,24 @@ export type Database = {
           },
         ]
       }
+      ai_usage: {
+        Row: {
+          count: number
+          day: string
+          user_id: string
+        }
+        Insert: {
+          count?: number
+          day?: string
+          user_id: string
+        }
+        Update: {
+          count?: number
+          day?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       attacks: {
         Row: {
           attack_bonus: string | null
@@ -86,6 +104,44 @@ export type Database = {
             columns: ["character_id"]
             isOneToOne: false
             referencedRelation: "characters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      campaign_journal_entries: {
+        Row: {
+          author_user_id: string
+          campaign_id: string
+          content: string
+          created_at: string
+          entry_type: string
+          id: string
+          status: string
+        }
+        Insert: {
+          author_user_id: string
+          campaign_id: string
+          content: string
+          created_at?: string
+          entry_type?: string
+          id?: string
+          status?: string
+        }
+        Update: {
+          author_user_id?: string
+          campaign_id?: string
+          content?: string
+          created_at?: string
+          entry_type?: string
+          id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_journal_entries_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
             referencedColumns: ["id"]
           },
         ]
@@ -770,6 +826,94 @@ export type Database = {
           },
         ]
       }
+      handouts: {
+        Row: {
+          campaign_id: string
+          content: string | null
+          created_at: string
+          handout_type: string
+          id: string
+          image_url: string | null
+          is_revealed: boolean
+          revealed_at: string | null
+          title: string
+        }
+        Insert: {
+          campaign_id: string
+          content?: string | null
+          created_at?: string
+          handout_type: string
+          id?: string
+          image_url?: string | null
+          is_revealed?: boolean
+          revealed_at?: string | null
+          title: string
+        }
+        Update: {
+          campaign_id?: string
+          content?: string | null
+          created_at?: string
+          handout_type?: string
+          id?: string
+          image_url?: string | null
+          is_revealed?: boolean
+          revealed_at?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "handouts_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lore_pages: {
+        Row: {
+          campaign_id: string
+          category: string
+          content: string
+          created_at: string
+          id: string
+          image_url: string | null
+          is_visible_to_players: boolean
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          campaign_id: string
+          category?: string
+          content?: string
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          is_visible_to_players?: boolean
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          campaign_id?: string
+          category?: string
+          content?: string
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          is_visible_to_players?: boolean
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lore_pages_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       map_pins: {
         Row: {
           campaign_id: string
@@ -1107,6 +1251,114 @@ export type Database = {
           },
         ]
       }
+      quest_objectives: {
+        Row: {
+          id: string
+          is_done: boolean
+          quest_id: string
+          sort_order: number
+          text: string
+        }
+        Insert: {
+          id?: string
+          is_done?: boolean
+          quest_id: string
+          sort_order?: number
+          text: string
+        }
+        Update: {
+          id?: string
+          is_done?: boolean
+          quest_id?: string
+          sort_order?: number
+          text?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quest_objectives_quest_id_fkey"
+            columns: ["quest_id"]
+            isOneToOne: false
+            referencedRelation: "quests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quests: {
+        Row: {
+          campaign_id: string
+          created_at: string
+          description: string
+          id: string
+          is_visible_to_players: boolean
+          reward: string | null
+          sort_order: number
+          status: string
+          title: string
+        }
+        Insert: {
+          campaign_id: string
+          created_at?: string
+          description?: string
+          id?: string
+          is_visible_to_players?: boolean
+          reward?: string | null
+          sort_order?: number
+          status?: string
+          title: string
+        }
+        Update: {
+          campaign_id?: string
+          created_at?: string
+          description?: string
+          id?: string
+          is_visible_to_players?: boolean
+          reward?: string | null
+          sort_order?: number
+          status?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quests_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      saved_encounters: {
+        Row: {
+          campaign_id: string
+          created_at: string
+          id: string
+          monsters: Json
+          name: string
+        }
+        Insert: {
+          campaign_id: string
+          created_at?: string
+          id?: string
+          monsters?: Json
+          name: string
+        }
+        Update: {
+          campaign_id?: string
+          created_at?: string
+          id?: string
+          monsters?: Json
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saved_encounters_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sessions: {
         Row: {
           character_id: string
@@ -1395,6 +1647,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      consume_dm_ai_usage: { Args: never; Returns: number }
       dm_long_rest: { Args: { _campaign_id: string }; Returns: undefined }
       dm_set_level_up: {
         Args: { _character_id: string; _pending: boolean }
