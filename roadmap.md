@@ -8,5 +8,5 @@
 - [ ] Build campaign Handouts with private DM management and player reveal view
 - [ ] Add DM AI NPC generation and session recap with daily usage cap
 - [ ] Add campaign Lore Wiki with visibility, search, markdown preview, and page links
-- [ ] Review and incorporate uploaded Monster Library / Encounter Builder requirements
+- [ ] Build the uploaded Open5e Monster Library / Encounter Builder as an additional DM tool
 - [ ] Validate new campaign features and update roadmap
