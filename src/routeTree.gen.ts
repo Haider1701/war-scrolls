@@ -10,11 +10,17 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiDmAiRouteImport } from './routes/api/dm-ai'
 import { Route as ApiGenerateBackstoryRouteImport } from './routes/api/generate-backstory'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiDmAiRoute = ApiDmAiRouteImport.update({
+  id: '/api/dm-ai',
+  path: '/api/dm-ai',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiGenerateBackstoryRoute = ApiGenerateBackstoryRouteImport.update({
@@ -25,27 +31,31 @@ const ApiGenerateBackstoryRoute = ApiGenerateBackstoryRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/api/dm-ai': typeof ApiDmAiRoute
   '/api/generate-backstory': typeof ApiGenerateBackstoryRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/api/dm-ai': typeof ApiDmAiRoute
   '/api/generate-backstory': typeof ApiGenerateBackstoryRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/api/dm-ai': typeof ApiDmAiRoute
   '/api/generate-backstory': typeof ApiGenerateBackstoryRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/api/generate-backstory'
+  fullPaths: '/' | '/api/dm-ai' | '/api/generate-backstory'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/api/generate-backstory'
-  id: '__root__' | '/' | '/api/generate-backstory'
+  to: '/' | '/api/dm-ai' | '/api/generate-backstory'
+  id: '__root__' | '/' | '/api/dm-ai' | '/api/generate-backstory'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ApiDmAiRoute: typeof ApiDmAiRoute
   ApiGenerateBackstoryRoute: typeof ApiGenerateBackstoryRoute
 }
 
@@ -56,6 +66,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/dm-ai': {
+      id: '/api/dm-ai'
+      path: '/api/dm-ai'
+      fullPath: '/api/dm-ai'
+      preLoaderRoute: typeof ApiDmAiRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/generate-backstory': {
@@ -70,6 +87,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ApiDmAiRoute: ApiDmAiRoute,
   ApiGenerateBackstoryRoute: ApiGenerateBackstoryRoute,
 }
 export const routeTree = rootRouteImport
